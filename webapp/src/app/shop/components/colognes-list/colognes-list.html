@@ -1,0 +1,10 @@
+<h1>Wybierz zapach</h1>
+
+@for (cologne of colognes$ | async; track cologne) {
+  <app-cologne
+    [brandName]="cologne.brandName"
+    [cologneName]="cologne.cologneName"
+  ></app-cologne>
+}
+
+

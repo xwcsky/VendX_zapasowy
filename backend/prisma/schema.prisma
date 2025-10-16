@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model colognes {
+  id            String   @id @default(uuid())
+  brand_name    String
+  cologne_name  String
+  orders        orders[]  // relacja odwrotna
+}
+
+model orders {
+  id            String   @id @default(uuid())
+  scent_id      String
+  device_id     String
+  creation_date DateTime @default(now())
+  cologne       colognes  @relation(fields: [scent_id], references: [id])
+}
