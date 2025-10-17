@@ -11,10 +11,10 @@ import {AsyncPipe} from '@angular/common';
     CologneComponent,
     AsyncPipe
   ],
-  templateUrl: './colognes-list.html',
-  styleUrl: './colognes-list.scss'
+  templateUrl: './colognes-list.component.html',
+  styleUrl: './colognes-list.component.scss'
 })
-export class ColognesList implements OnInit, OnDestroy {
+export class ColognesListComponent implements OnInit, OnDestroy {
   colognes$: Observable<Cologne[]> | undefined;
 
   private destroy$ = new Subject<void>();

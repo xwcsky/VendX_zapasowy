@@ -8,7 +8,7 @@ export class ColognesService {
 
     async findAll() {
         const rows = await this.prisma.colognes.findMany({
-            orderBy: { brand_name: 'desc' }, // sortowanie od najnowszych
+            orderBy: { cologne_name: 'desc' }, // sortowanie od najnowszych
         });
 
         // Mapowanie z snake_case (DB) na camelCase (API)

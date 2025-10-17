@@ -8,17 +8,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model colognes {
-  id            String   @id @default(uuid())
-  brand_name    String
-  cologne_name  String
-  orders        orders[]  // relacja odwrotna
+model Colognes {
+  id           String   @id @default(uuid())
+  cologne_name String
+  brand_name   String  @default("unknown") // <- domyślna wartość
+  orders       Orders[]
+  @@map("colognes")
 }
 
-model orders {
+model Orders {
   id            String   @id @default(uuid())
   scent_id      String
   device_id     String
   creation_date DateTime @default(now())
-  cologne       colognes  @relation(fields: [scent_id], references: [id])
+  cologne       Colognes  @relation(fields: [scent_id], references: [id])
+  @@map("orders")
+}
+
+model Users {
+  id            Int    @id @default(autoincrement())
+  user_name     String @unique
+  password      String
+  @@map("user")
 }
