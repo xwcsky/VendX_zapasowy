@@ -27,10 +27,22 @@ export class AuthService {
         const user = await this.validateUser(userName, password);
         if (!user) throw new UnauthorizedException('Niepoprawne dane logowania');
 
-        const payload = { sub: user.id, user_name: user.user_name };
+        // Payload do JWT
+        const payload = {
+            sub: user.id,
+            userName: user.user_name,
+            role: user.role,
+            deviceId: user.deviceId ?? null
+        };
+
         return {
             access_token: this.jwtService.sign(payload),
+            user: {
+                id: user.id,
+                userName: user.user_name,
+                role: user.role,
+                deviceId: user.deviceId ?? null
+            }
         };
     }
-
 }

@@ -3,7 +3,7 @@ import {ColognesListComponent} from '../../components/colognes-list/colognes-lis
 import {AuthService} from '../../../auth/auth.service';
 
 @Component({
-  selector: 'app-shop.component',
+  selector: 'app-shop',
   imports: [
     ColognesListComponent
   ],
