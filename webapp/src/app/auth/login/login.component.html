@@ -1,0 +1,28 @@
+<div class="w-100 min-vh-100 d-flex justify-content-center align-items-center">
+  <div class="card w-25 w-50 p-5">
+    <h3>Login to the system</h3>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div>
+        <label for="user"></label>
+        <input
+          type="text"
+          id="user"
+          [formControlName]="'user'"
+          class="form-control"
+        >
+      </div>
+      <div>
+        <label for="password"></label>
+        <input
+          type="password"
+          id="password"
+          [formControlName]="'password'"
+          class="form-control"
+        >
+      </div>
+      <div class="pt-4">
+        <button type="submit" class="w-100">Login</button>
+      </div>
+    </form>
+  </div>
+</div>
