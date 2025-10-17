@@ -9,25 +9,42 @@ datasource db {
 }
 
 model Colognes {
-  id           String   @id @default(uuid())
+  id           String           @id @default(uuid())
   cologne_name String
-  brand_name   String  @default("unknown") // <- domyślna wartość
+  brand_name   String           @default("unknown")
   orders       Orders[]
   @@map("colognes")
 }
 
 model Orders {
-  id            String   @id @default(uuid())
+  id            String          @id @default(uuid())
   scent_id      String
   device_id     String
-  creation_date DateTime @default(now())
-  cologne       Colognes  @relation(fields: [scent_id], references: [id])
+  creation_date DateTime        @default(now())
+  cologne       Colognes        @relation(fields: [scent_id], references: [id])
   @@map("orders")
 }
 
 model Users {
-  id            Int    @id @default(autoincrement())
+  id            Int             @id @default(autoincrement())
   user_name     String @unique
   password      String
+  role          Role            @default(CLIENT)
+  device        Devices?        @relation(fields: [deviceId], references: [id])
+  deviceId      Int?            @unique
   @@map("user")
+}
+
+model Devices {
+  id          Int               @id @default(autoincrement())
+  name        String
+  location    String?
+  scentSlots  Json
+  user        Users?
+  @@map("devices")
+}
+
+enum Role {
+  ADMIN
+  CLIENT
 }
