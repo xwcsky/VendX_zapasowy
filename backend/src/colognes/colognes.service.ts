@@ -16,24 +16,25 @@ export class ColognesService {
             id: row.id,
             brandName: row.brand_name,
             cologneName: row.cologne_name,
+            imageUrl: row.image_url
         }));
     }
 
     // Tworzy nowe zamówienie
     async create(dto: CreateCologneDto) {
-        console.log('Tworzę zamówienie z DTO:', dto);
-
         const row = await this.prisma.colognes.create({
             data: {
                 brand_name: dto.brandName,
-                cologne_name: dto.cologneName
+                cologne_name: dto.cologneName,
+                image_url: dto.imageUrl
             },
         });
 
         return {
             id: row.id,
             brandName: row.brand_name,
-            cologneName: row.cologne_name
+            cologneName: row.cologne_name,
+            image_url: dto.imageUrl
         };
     }
 }

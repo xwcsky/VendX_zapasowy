@@ -13,6 +13,7 @@ model Colognes {
   cologne_name String
   brand_name   String           @default("unknown")
   orders       Orders[]
+  image_url    String?
   @@map("colognes")
 }
 

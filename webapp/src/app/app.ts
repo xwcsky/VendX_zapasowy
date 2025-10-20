@@ -1,13 +1,11 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterOutlet } from '@angular/router';
-import { ColognesListComponent } from './shop/components/colognes-list/colognes-list.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  standalone: true,
+  imports: [CommonModule, RouterOutlet],
+  template: `<router-outlet></router-outlet>`,
 })
-export class App {
-  protected readonly title = signal('webapp');
-}
+export class App {}

@@ -13,11 +13,24 @@ async function bootstrap() {
         transform: true,      // automatycznie konwertuje JSON na instancję DTO
     }));
 
-    app.enableCors({
-        origin: 'http://localhost:4200', // Angular
-        methods: 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
-        credentials: true, // jeśli wysyłasz cookies / auth
+    app.use((req, res, next) => {
+        console.log('Request from:', req.headers.origin);
+        console.log('Auth header:', req.headers.authorization);
+        next();
     });
+
+    app.enableCors({
+        origin: [
+            'http://192.168.1.17:4200',
+            'http://192.168.8.100:4200',
+            'http://localhost:4200'
+        ],
+        methods: ['GET','POST','PUT','DELETE','PATCH','OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+        exposedHeaders: ['Authorization'],
+        credentials: true,
+    });
+
 
     await app.listen(3000);
 }

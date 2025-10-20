@@ -1,3 +1,15 @@
-<div class="cologne-wrapper">
-  <h2>{{ brandName }} - {{ cologneName }}</h2>
+<div
+  class="cologne-wrapper"
+  [ngClass]="{'cologne-selected': isSelected}"
+>
+  <img
+    [src]="'assets/images/colognes/' + cologneData?.imageUrl"
+    [alt]="cologneData?.cologneName + ' image'"
+    class="card-img-top cologne-image"
+  >
+  <div class="description>">
+
+  </div>
+  <h5 class="card-title">{{ cologneData?.cologneName }}</h5>
+  <p class="card-text">{{ cologneData?.brandName }}</p>
 </div>

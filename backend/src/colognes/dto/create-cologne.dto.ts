@@ -6,4 +6,7 @@ export class CreateCologneDto {
 
     @IsString()
     cologneName: string;
+
+    @IsString()
+    imageUrl: string;
 }

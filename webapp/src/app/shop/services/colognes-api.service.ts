@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {Cologne} from '../../common/model/interfaces';
+import {AuthService} from '../../auth/auth.service';
+import {ConfigurationService} from '../../common/services/configuration.service';
 
 export interface CreateCologneDto {
   brandName: string;
@@ -12,17 +14,13 @@ export interface CreateCologneDto {
   providedIn: 'root'
 })
 export class ColognesApiService {
-  private apiUrl = 'http://localhost:3000/colognes'; // backend URL
+  private readonly API_URL = ConfigurationService.getApiUrl();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) {}
 
-  // Tworzy nowe zamówienie
-  createOrder(dto: CreateCologneDto): Observable<Cologne> {
-    return this.http.post<Cologne>(this.apiUrl, dto);
-  }
-
-  // Pobiera listę zamówień
   getColognes(): Observable<Cologne[]> {
-    return this.http.get<Cologne[]>(this.apiUrl);
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    return this.http.get<Cologne[]>(`${this.API_URL}/colognes`, { headers });
   }
 }
