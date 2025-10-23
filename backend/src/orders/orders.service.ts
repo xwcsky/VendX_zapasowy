@@ -1,14 +1,12 @@
-import {Injectable, UseGuards} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 
 @Injectable()
 export class OrdersService {
     constructor(private prisma: PrismaService) {}
 
     // Pobiera wszystkie zamówienia
-    @UseGuards(JwtAuthGuard)
     async findAll() {
         const rows = await this.prisma.orders.findMany({
             orderBy: { creation_date: 'desc' }, // sortowanie od najnowszych
