@@ -21,17 +21,18 @@ async function bootstrap() {
 
     app.enableCors({
         origin: [
+            'https://vendx.pl',
+            'http://vendx.pl',
             'http://192.168.1.17:4200',
             'http://192.168.8.100:4200',
             'http://localhost:4200'
         ],
-        methods: ['GET','POST','PUT','DELETE','PATCH','OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         exposedHeaders: ['Authorization'],
         credentials: true,
     });
 
-
-    await app.listen(3000);
+    await app.listen(35100);
 }
 bootstrap();

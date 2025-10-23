@@ -1,28 +1,31 @@
 <div class="p-5 bg-light min-vh-100">
   <header class="d-flex justify-content-between">
-    <h1>Wybierz zapach</h1>
+    <h1>{{ !payConfirmed ? 'Wybierz zapach' : 'Zapłać' }}</h1>
     <button (click)="logout()">Logout</button>
   </header>
-  <div>
-    <app-colognes-list (selectedCologne)="setCologneId($event)"></app-colognes-list>
-  </div>
-  <footer class="d-flex justify-content-center align-items-center mt-5">
-    <button
-      [disabled]="!cologneId"
-      class="w-50 p-4 rounded-4"
-    >
-      <span>Zapłać</span>
-    </button>
-  </footer>
-  <div class="d-flex flex-column justify-content-center align-items-center mt-5">
-    <qrcode
-      [qrdata]="ConfigurationService.getHostUrl() + '/payment'"
-      [width]="250"
-      [margin]="2"
-      [errorCorrectionLevel]="'M'"
-      [colorDark]="'#000000'"
-      [colorLight]="'#ffffff'">
-    </qrcode>
-    <p class="caption">Zeskanuj kod, aby zapłacić</p>
-  </div>
+
+  @if (!payConfirmed) {
+    <div>
+      <app-colognes-list (selectedCologne)="setCologneId($event)"></app-colognes-list>
+    </div>
+    @if (cologneId) {
+      <footer class="d-flex justify-content-center align-items-center mt-5">
+        <button (click)="confirmPayment()" class="w-50 p-4 rounded-4">
+          <span>Zapłać</span>
+        </button>
+      </footer>
+    }
+  } @else {
+    <div class="d-flex flex-column justify-content-center align-items-center mt-5">
+      <qrcode
+        [qrdata]="ConfigurationService.getHostUrl() + '/payment'"
+        [width]="250"
+        [margin]="2"
+        [errorCorrectionLevel]="'M'"
+        [colorDark]="'#000000'"
+        [colorLight]="'#ffffff'">
+      </qrcode>
+      <p class="caption">Zeskanuj kod, aby zapłacić</p>
+    </div>
+  }
 </div>

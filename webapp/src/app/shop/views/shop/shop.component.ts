@@ -15,6 +15,7 @@ import {ConfigurationService} from '../../../common/services/configuration.servi
 })
 export class ShopComponent {
   cologneId: string | undefined;
+  payConfirmed: boolean = false;
 
   constructor(
     public authService: AuthService
@@ -27,6 +28,10 @@ export class ShopComponent {
 
   setCologneId(cologneId: string | undefined): void {
     this.cologneId = cologneId;
+  }
+
+  confirmPayment(): void {
+    this.payConfirmed = true;
   }
 
   protected readonly ConfigurationService = ConfigurationService;
