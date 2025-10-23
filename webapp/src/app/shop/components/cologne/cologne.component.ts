@@ -1,12 +1,21 @@
-import { Component, Input } from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Cologne} from '../../../common/model/interfaces';
+import {NgClass} from '@angular/common';
 
 @Component({
   selector: 'app-cologne',
-  imports: [],
   templateUrl: './cologne.component.html',
+  imports: [
+    NgClass
+  ],
   styleUrl: './cologne.component.scss'
 })
-export class CologneComponent {
-  @Input() brandName: string | undefined;
-  @Input() cologneName: string | undefined;
+export class CologneComponent implements OnInit {
+  @Input() cologneData?: Cologne;
+  @Input() isSelected?: boolean;
+
+  constructor() {
+  }
+
+  ngOnInit(): void {}
 }

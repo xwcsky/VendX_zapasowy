@@ -1,7 +1,24 @@
 .cologne-wrapper {
-  display: block;
-  position: relative;
-  float: left;
-  padding: 20px;
-  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid transparent;
+  padding: 30px;
+  border-radius: 20px;
+
+  .cologne-image {
+    width: 300px;
+    height: auto;
+    z-index: -1;
+    transition: transform 0.1s ease-in-out;
+  }
+
+  &.cologne-selected {
+    border-color: #CCC;
+
+    .cologne-image {
+      transform: scale(1.2);
+    }
+  }
 }

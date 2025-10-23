@@ -1,14 +1,14 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AuthService } from '../../auth/auth.service';
+import { ConfigurationService } from '../../common/services/configuration.service';
 
-// DTO do wysyłania
 export interface CreateOrderDto {
   scentId: string;
   deviceId: string;
 }
 
-// Model zwracany z backendu
 export interface Order {
   id: string;
   scent_id: string;
@@ -20,17 +20,15 @@ export interface Order {
   providedIn: 'root'
 })
 export class OrdersApiService {
-  private apiUrl = 'http://localhost:3000/orders'; // backend URL
+  private readonly API_URL = ConfigurationService.getApiUrl();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private authService: AuthService) { }
 
-  // Tworzy nowe zamówienie
   createOrder(dto: CreateOrderDto): Observable<Order> {
-    return this.http.post<Order>(this.apiUrl, dto);
+    return this.http.post<Order>(`${this.API_URL}/colognes`, dto);
   }
 
-  // Pobiera listę zamówień
   getOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(this.apiUrl);
+    return this.http.get<Order[]>(`${this.API_URL}/colognes`);
   }
 }

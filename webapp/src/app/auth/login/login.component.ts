@@ -30,18 +30,19 @@ export class LoginComponent implements OnInit {
 
     const { user, password } = this.form.value;
 
+
     this.authService.login(user, password).subscribe({
       next: (res) => {
-        localStorage.setItem('auth_token', res.access_token);
+        // zapis tokena i aktualizacja BehaviorSubject
+        this.authService.setToken(res.access_token);
+
+        // zapis użytkownika w localStorage
         localStorage.setItem('current_user', JSON.stringify(res.user));
-        this.authService.isAuthenticated.set(true);
 
         console.log('role: ', res.user.role);
-        if(res.user.role === 'ADMIN') {
-          console.log('navigate admin');
+        if (res.user.role === 'ADMIN') {
           this.router.navigate(['/admin']);
         } else {
-          console.log('navigate shop');
           this.router.navigate(['/shop']);
         }
       },
