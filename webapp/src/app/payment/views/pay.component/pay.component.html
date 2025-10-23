@@ -1,5 +1,11 @@
 <div class="d-flex flex-column justify-content-center align-items-center min-vh-100">
-  <h1>PAYMENT</h1>
-  <span>Twoj system to: {{ system }}</span>
+  <h1>ZAPŁAĆ</h1>
+  @if (system === OSType.iOS) {
+    <app-apple-pay-button></app-apple-pay-button>
+  } @else if (system === OSType.Android) {
+    <app-google-pay-button></app-google-pay-button>
+  } @else {
+   <span>Zapłać BLIK</span>
+  }
 </div>
 
