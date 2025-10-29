@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://vendx.pl/scentify/api'
+  apiUrl: 'https://vendx-scentify-api-kcfya.ondigitalocean.app/'
 };

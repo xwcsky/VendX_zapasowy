@@ -1,17 +1,20 @@
-<div class="swiper">
-  <div class="swiper-wrapper">
-    @for (cologne of colognes$ | async; track cologne; let i = $index) {
-      <div class="swiper-slide">
-        <app-cologne
-          [cologneData]="cologne"
-          [isSelected]="selectedCologneId === cologne.id"
-          (click)="selectCologne(cologne.id)"
-        ></app-cologne>
-      </div>
-    }
+@if (colognes) {
+  <div class="swiper">
+    <div class="swiper-wrapper">
+      @for (cologne of colognes; track cologne.id; let i = $index) {
+        <div class="swiper-slide">
+          <app-cologne
+            [cologneData]="cologne"
+            [isSelected]="selectedCologneId === cologne.id"
+            (click)="selectCologne(cologne.id)"
+          ></app-cologne>
+        </div>
+      }
+    </div>
+    <div class="swiper-pagination"></div>
+    <div class="swiper-button-prev"></div>
+    <div class="swiper-button-next"></div>
+    <div class="swiper-scrollbar"></div>
   </div>
-  <div class="swiper-pagination"></div>
-  <div class="swiper-button-prev"></div>
-  <div class="swiper-button-next"></div>
-  <div class="swiper-scrollbar"></div>
-</div>
+}
+

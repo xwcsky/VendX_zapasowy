@@ -2,23 +2,30 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
-    // 🔹 Dodaj globalny pipe dla DTO
+    // 🔹 Parser dla powiadomień Tpay (form-urlencoded)
+    app.use(bodyParser.urlencoded({ extended: true }));
+    app.use(bodyParser.json()); // opcjonalnie, jeśli inne endpointy przyjmują JSON
+
+    // 🔹 Globalny pipe dla DTO
     app.useGlobalPipes(new ValidationPipe({
-        whitelist: true,      // usuwa nieznane pola z body
-        forbidNonWhitelisted: true, // rzuca błąd jeśli pojawią się nieznane pola
-        transform: true,      // automatycznie konwertuje JSON na instancję DTO
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
     }));
 
+    // 🔹 Logowanie requestów
     app.use((req, res, next) => {
         console.log('Request from:', req.headers.origin);
         console.log('Auth header:', req.headers.authorization);
         next();
     });
 
+    // 🔹 CORS
     app.enableCors({
         origin: [
             'https://vendx.pl',

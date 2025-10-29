@@ -1,0 +1,12 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /scentify/
+
+  # Jeśli żądany plik istnieje (JS, CSS, obrazy), nie zmieniaj
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Wszystkie inne requesty kieruj na index.html
+  RewriteRule ^ index.html [L]
+</IfModule>
