@@ -52,7 +52,7 @@ export class GooglePayService {
             type: 'DIRECT',
             parameters: {
               protocolVersion: 'ECv2',
-              publicKey: 'TU_TUTAJ_PUBLICZNY_KLUCZ_SANDBOX'
+              publicKey: 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0NCk1JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQmdRRE5FUFRjejlRZHJHT0VZVjN1SkJoKzBWa3UNCnVnY3FIRXdQWXhmc3F2T2Mwa1NRUU1ZeUdFSHZma1krWkUvZU9jcUNrczN4ZjNWRTBXbGxOKzhhSlJxSFhVdE4NClQ2alZ5M1hqajVrQzE0bGRsSWQzQ1N6dXhscGpDakQzR0dyeTg4ckZrc0RVMFRYTXlMTUI0dlJXTTZhV0hsd24NCnU4NXpwVDZvdGxnU05YZ0J6UUlEQVFBQg0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t'
             }
           }
         }
