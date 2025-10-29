@@ -1,53 +1,34 @@
-import {AfterViewChecked, Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import {AfterViewInit, ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, Output} from '@angular/core';
+import { Subject, takeUntil } from 'rxjs';
 import { ColognesApiService } from '../../services/colognes-api.service';
 import { Cologne } from '../../../common/model/interfaces';
-import { AsyncPipe } from '@angular/common';
 import { Carousel } from 'bootstrap';
 import { CologneComponent } from '../cologne/cologne.component';
-import Swiper from 'swiper';
 import { Navigation, Pagination } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
+import Swiper from 'swiper';
 
 @Component({
   selector: 'app-colognes-list',
   imports: [
-    AsyncPipe,
     CologneComponent
   ],
   templateUrl: './colognes-list.component.html',
   styleUrl: './colognes-list.component.scss'
 })
-export class ColognesListComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class ColognesListComponent implements AfterViewInit, OnDestroy {
   @Output() selectedCologne: EventEmitter<string | undefined> = new EventEmitter();
-  colognes$: Observable<Cologne[]> | undefined;
+  colognes: Cologne[] | undefined;
 
   swiper: Swiper | undefined;
   selectedCologneId: string | undefined;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private colognesApiService: ColognesApiService) {
+  constructor(private colognesApiService: ColognesApiService, private cdr: ChangeDetectorRef) {
   }
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     this.loadColognes();
-  }
-
-  ngAfterViewChecked() {
-    this.swiper = new Swiper('.swiper', {
-      modules: [Navigation, Pagination],
-      slidesPerView: 3,
-      spaceBetween: 0,
-      navigation: {
-        prevEl: '.swiper-button-prev',
-        nextEl: '.swiper-button-next',
-      }
-    });
-    const carouselEl = document.querySelector('#mainCarousel');
-    if (carouselEl) new Carousel(carouselEl, { touch: true, ride: false });
   }
 
   ngOnDestroy() {
@@ -61,6 +42,29 @@ export class ColognesListComponent implements OnInit, OnDestroy, AfterViewChecke
   }
 
   private loadColognes(): void {
-    this.colognes$ = this.colognesApiService.getColognes();
+    this.colognesApiService.getColognes()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: colognes => {
+          this.colognes = colognes;
+          console.log(colognes);
+          this.cdr.detectChanges();
+          setTimeout(() => this.initSwiper(), 0);
+        },
+      });
+  }
+
+  private initSwiper(): void {
+    this.swiper = new Swiper('.swiper', {
+      modules: [Navigation, Pagination],
+      slidesPerView: 3,
+      spaceBetween: 0,
+      navigation: {
+        prevEl: '.swiper-button-prev',
+        nextEl: '.swiper-button-next',
+      }
+    });
+    const carouselEl = document.querySelector('#mainCarousel');
+    if (carouselEl) new Carousel(carouselEl, { touch: true, ride: false });
   }
 }
