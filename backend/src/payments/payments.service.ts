@@ -31,7 +31,7 @@ export class PaymentsService {
             });
 
             // Tpay przekierowuje użytkownika na stronę płatności
-            return { success: true, redirectUrl: response.request.res.responseUrl };
+            return { success: true, redirectUrl: response.data.url };
         } catch (error: any) {
             this.logger.error(error);
             return { success: false, error: error.message };
