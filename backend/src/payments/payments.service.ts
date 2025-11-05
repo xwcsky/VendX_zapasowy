@@ -1,45 +1,47 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
-import * as qs from 'qs';
 
 @Injectable()
 export class PaymentsService {
     private readonly logger = new Logger(PaymentsService.name);
-    private readonly TPAY_SANDBOX_URL = 'https://secure.tpay.com';
-    private readonly MERCHANT_ID = '408446';
-    private readonly VERIFY_CODE = '3edc2413172c4fe13645d5fb3cc7bad4';
+    private readonly TPAY_API_KEY = '826e2bc8574671e80de7293bb22877caa4cc07dd';
+    private readonly TPAY_BASE_URL = 'https://secure.snd.tpay.com/api/gw';
 
     async processPayment(token: string, amount: number, currency: string) {
         try {
-            // W sandboxie tworzysz fikcyjną transakcję (token możesz po prostu logować)
-            this.logger.log(`Received Google Pay token: ${token.slice(0, 30)}...`);
+            this.logger.log(`Received Google Pay token: ${token.slice(0, 25)}...`);
 
-            const data = {
-                id: this.MERCHANT_ID,
-                amount: amount,
+            const payload = {
+                id: 408446,
+                amount,
                 description: 'Testowa płatność Google Pay',
                 crc: Date.now().toString(),
                 result_url: 'https://vendx-scentify-api-kcfya.ondigitalocean.app/payments/notify',
-                return_url: 'https://vendx.pl/scentify/payment/confirm', // 👉 gdzie użytkownik trafi po płatności
+                return_url: 'https://vendx.pl/scentify/payment/confirm',
+                return_error_url: 'https://vendx.pl/scentify/payment/error',
                 email: 'test@client.com',
-                name: 'Test User'
+                name: 'Test User',
+                language: 'pl',
+                accept_tos: 1,
+                api_password: '2ZTt!zMTnyySiQ6',
             };
 
-            const form = qs.stringify(data);
-            const response = await axios.post(`${this.TPAY_SANDBOX_URL}`, form, {
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            const url = `${this.TPAY_BASE_URL}/${this.TPAY_API_KEY}/transaction/create`;
+
+            const response = await axios.post(url, payload, {
+                headers: { 'Content-Type': 'application/json' },
             });
 
-            // Tpay przekierowuje użytkownika na stronę płatności
-            return { success: true, redirectUrl: response.data.url };
+            this.logger.log(`Tpay response: ${JSON.stringify(response.data)}`);
+
+            if (response.data.result === 1 && response.data.url) {
+                return { success: true, redirectUrl: response.data.url };
+            }
+
+            return { success: false, error: response.data.desc || 'Nie udało się utworzyć transakcji' };
         } catch (error: any) {
             this.logger.error(error);
             return { success: false, error: error.message };
         }
-    }
-
-    async confirmTpayPayment(data: any) {
-        this.logger.log(`🔄 Potwierdzono płatność Tpay dla transakcji ${data.tr_id}`);
-        return { success: true };
     }
 }
