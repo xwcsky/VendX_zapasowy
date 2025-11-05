@@ -83,9 +83,7 @@ export class GooglePayService {
     );
   }
 
-  finalizePayment(paymentToken: string, amount: string, currency: string): Observable<any> {
-    const token = this.authService.getToken();
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-    return this.http.post(`${this.API_URL}/payments`, { paymentToken, amount, currency })
+  finalizePayment(token: string, amount: number, currency: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/payments`, { token, amount, currency })
   }
 }
