@@ -23,20 +23,27 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "public/"
               }
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "src/styles.scss"
             ],
-            "scripts": ["node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"],
-            "allowedCommonJsDependencies": [
-              "qrcode"
-            ]
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+            "allowedCommonJsDependencies": ["qrcode"],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src",
+                "public"
+              ]
+            }
           },
           "configurations": {
             "production": {
+              "outputPath": "dist/webapp/browser",
               "budgets": [
                 {
                   "type": "initial",
@@ -55,12 +62,25 @@
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.prod.ts"
                 }
-              ]
+              ],
+              "baseHref": "/scentify/",
+              "deployUrl": "/scentify/",
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
             },
             "development": {
               "optimization": false,
               "extractLicenses": false,
-              "sourceMap": true
+              "sourceMap": true,
+              "baseHref": "/",
+              "deployUrl": "/",
+              "stylePreprocessorOptions": {
+                "includePaths": [
+                  "src",
+                  "public"
+                ]
+              }
             }
           },
           "defaultConfiguration": "production"
@@ -69,7 +89,7 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "webapp:build:production",
+              "buildTarget": "webapp:build:production"
             },
             "development": {
               "buildTarget": "webapp:build:development"
@@ -88,14 +108,22 @@
             "assets": [
               {
                 "glob": "**/*",
-                "input": "public"
+                "input": "public/"
               }
             ],
             "styles": [
               "node_modules/bootstrap/dist/css/bootstrap.min.css",
               "src/styles.scss"
             ],
-            "scripts": ["node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"]
+            "scripts": [
+              "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js"
+            ],
+            "stylePreprocessorOptions": {
+              "includePaths": [
+                "src",
+                "public"
+              ]
+            }
           }
         }
       }

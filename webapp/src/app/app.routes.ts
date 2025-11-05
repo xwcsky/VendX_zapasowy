@@ -6,11 +6,13 @@ import {ShopComponent} from './shop/views/shop/shop.component';
 import {AdminComponent} from './admin/views/admin/admin.component';
 import {PayComponent} from './payment/views/pay.component/pay.component';
 import {ConfirmComponent} from './payment/views/confirm.component/confirm.component';
+import {ErrorComponent} from './payment/views/error.component/error.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
   { path: 'payment', component: PayComponent },
   { path: 'payment/confirm', component: ConfirmComponent },
+  { path: 'payment/error', component: ErrorComponent },
   {
     path: '',
     canActivate: [authGuard],
