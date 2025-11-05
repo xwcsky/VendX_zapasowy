@@ -2,14 +2,21 @@ import { Injectable } from '@angular/core';
 import { GooglePayLoaderService } from './google-pay-loader.service';
 import { from, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import {ConfigurationService} from '../../common/services/configuration.service';
+import {Cologne} from '../../common/model/interfaces';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {AuthService} from '../../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class GooglePayService {
 
+  private readonly API_URL = ConfigurationService.getApiUrl();
   private paymentsClient: any;
-  constructor(private loader: GooglePayLoaderService) {}
+  constructor(private authService: AuthService,
+              private loader: GooglePayLoaderService,
+              private http: HttpClient) {}
 
   init(): Observable<void> {
     return this.loader.loadScript().pipe(
@@ -74,5 +81,11 @@ export class GooglePayService {
     return from(
       this.paymentsClient.loadPaymentData(paymentDataRequest) as Promise<any>
     );
+  }
+
+  finalizePayment(paymentToken: string, amount: string, currency: string): Observable<any> {
+    const token = this.authService.getToken();
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    return this.http.post(`${this.API_URL}/payments`, { paymentToken, amount, currency })
   }
 }

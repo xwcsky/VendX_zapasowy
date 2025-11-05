@@ -1,0 +1,23 @@
+.apple-pay-btn {
+  font-family: "Montserrat", sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  background: url('../../../../../public/assets/logos/apple-pay.png') no-repeat 83% center #fff;
+
+  background-size: 21%;
+  height: 60px;
+  border: none;
+  outline: 1px solid #000;
+  outline-offset: 0;
+  border-radius: 30px;
+  padding: 10px 90px 10px 35px;
+
+  &:hover {
+    background-color: #EEE !important;
+  }
+
+  &:focus, &:active {
+    outline: 2px solid #005fcc;
+    outline-offset: -3px;
+  }
+}
