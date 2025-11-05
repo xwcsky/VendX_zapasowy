@@ -44,4 +44,9 @@ export class PaymentsService {
             return { success: false, error: error.message };
         }
     }
+
+    async confirmTpayPayment(data: any) {
+        this.logger.log(`💰 Potwierdzono płatność dla transakcji ${data.tr_id}`);
+        return { success: true };
+    }
 }
