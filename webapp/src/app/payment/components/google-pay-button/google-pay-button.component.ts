@@ -84,22 +84,35 @@ export class GooglePayButtonComponent implements OnInit {
   }
 
   onPaymentAuthorized: google.payments.api.PaymentAuthorizedHandler = (paymentData) => {
-    console.log('Payment authorized:', paymentData);
+    console.log('✅ Payment authorized:', paymentData);
 
     // token z Google Pay
     const token = paymentData.paymentMethodData.tokenizationData.token;
 
-    // kwota i waluta z paymentRequest
+    // cena i waluta z paymentRequest
     const amount = this.paymentRequest.transactionInfo.totalPrice;
     const currency = this.paymentRequest.transactionInfo.currencyCode;
 
-    // wyślij do backendu
-    this.googlePayService.finalizePayment(token, amount, currency).subscribe({
-      next: res => console.log('✅ Payment processed on backend:', res),
-      error: err => console.error('❌ Payment error:', err)
+    // wyślij token + dane do backendu
+    this.http.post<{ success: boolean; redirectUrl?: string; error?: string }>(
+      '/payments',
+      { token, amount, currency }
+    ).subscribe({
+      next: res => {
+        if (res.success && res.redirectUrl) {
+          console.log('✅ Backend OK, redirect:', res.redirectUrl);
+
+          // ✅ PRZEKIEROWANIE DO TPAY
+          window.location.href = res.redirectUrl;
+        } else {
+          console.error('❌ Payment failed:', res.error);
+        }
+      },
+      error: err => console.error('❌ Backend error:', err)
     });
 
-    // odpowiedź dla Google Pay
+    // ✅ odpowiedź dla Google Pay – to MUSI być natychmiast
     return { transactionState: 'SUCCESS' };
-  }
+  };
+
 }
