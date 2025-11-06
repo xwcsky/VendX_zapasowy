@@ -83,7 +83,7 @@ export class GooglePayService {
     );
   }
 
-  finalizePayment(token: string, amount: number, currency: string): Observable<any> {
-    return this.http.post(`${this.API_URL}/payments`, { token, amount, currency })
+  finalizePayment(token: string, amount: string, currency: string): Observable<any> {
+    return this.http.post<{ success: boolean; redirectUrl?: string; error?: string }>(`${this.API_URL}/payments`, { token, amount, currency });
   }
 }
