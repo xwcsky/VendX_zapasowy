@@ -1,31 +1,31 @@
-import { Controller, Post, Body, Res, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Res, HttpStatus, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { PaymentsService } from './payments.service';
 
 @Controller('payments')
 export class PaymentsController {
+    private readonly logger = new Logger(PaymentsController.name);
     constructor(private readonly paymentsService: PaymentsService) {}
 
     @Post()
     async createPayment(
-        @Body('token') googlePayToken: string,
-        @Body('amount') amount: number,
-        @Body('currency') currency: string,
+        @Body('token') googleToken: string,
+        @Body('amount') amount: string,
+        @Body('currency') currency: string = 'PLN'
     ) {
-        if (!googlePayToken) return { success: false, error: 'Token missing' };
-        return this.paymentsService.createGooglePayTransaction(
-            googlePayToken,
-            amount,
-            currency || 'PLN'
-        );
+        if (!googleToken) return { success: false, error: 'token is required' };
+        if (!amount) amount = '1.00';
+        return this.paymentsService.createGooglePayTransaction(googleToken, amount, currency);
     }
 
     @Post('notify')
-    async notify(@Body() body: any, @Res() res: Response) {
+    async handleNotify(@Body() body: any, @Res() res: Response) {
         try {
             this.paymentsService.handleNotify(body);
-            return res.status(HttpStatus.OK).send('TRUE');   // ✅ musi być EXACT "TRUE"
-        } catch (e) {
+            // exactly "TRUE"
+            return res.status(HttpStatus.OK).send('TRUE');
+        } catch (e: any) {
+            this.logger.error('Notify error', e.message || e);
             return res.status(HttpStatus.BAD_REQUEST).send('ERROR');
         }
     }

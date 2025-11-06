@@ -6,83 +6,93 @@ import * as crypto from 'crypto';
 @Injectable()
 export class PaymentsService {
     private readonly logger = new Logger(PaymentsService.name);
-
     private readonly merchantId = process.env.TPAY_MERCHANT_ID!;
     private readonly verifyCode = process.env.TPAY_VERIFY_CODE!;
     private readonly notifyUrl = process.env.TPAY_NOTIFY_URL!;
     private readonly returnOk = process.env.TPAY_RETURN_OK!;
     private readonly returnErr = process.env.TPAY_RETURN_ERR!;
-
-    private readonly tpayUrl =
-        process.env.TPAY_ENV === 'prod'
-            ? 'https://secure.tpay.com'
-            : 'https://secure.tpay.com'; // sandbox także na secure.tpay.com (test_mode=1)
+    private readonly tpayUrl = 'https://secure.tpay.com'; // classic endpoint (sandbox via test_mode)
 
     /**
-     * ✅ Tworzenie transakcji Google Pay w Classic API
+     * Create Classic API transaction with googlePayPaymentData (DIRECT token).
+     * googleToken: string (may be JSON-stringified)
+     * amount: string (e.g. "1.00")
      */
-    async createGooglePayTransaction(googleToken: string, amount: number, currency: string) {
-        const crc = `order_${Date.now()}`;
-        const amountStr = amount.toFixed(2);
-
-        const payload = {
-            id: this.merchantId,
-            amount: amountStr,
-            description: 'Płatność Google Pay',
-            crc,
-            test_mode: 1,                                // ✅ sandbox flag
-            result_url: this.notifyUrl,
-            return_url: this.returnOk,
-            return_error_url: this.returnErr,
-            email: 'test@client.com',
-            name: 'Test Sandbox User',
-            language: 'pl',
-            group: 166,                                  // ✅ Google Pay DIRECT
-            googlePayPaymentData: googleToken,           // ✅ token z frontu
-        };
-
+    async createGooglePayTransaction(googleToken: string, amount: string, currency = 'PLN') {
         try {
-            const res = await axios.post(
-                this.tpayUrl,
-                qs.stringify(payload),
-                {
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    maxRedirects: 0,                          // ✅ przechwyt redirecta
-                    validateStatus: (s) => s === 302 || (s >= 200 && s < 400),
-                }
-            );
+            // ensure token is string; if it's JSON object stringify it
+            let tokenToSend = googleToken;
+            if (typeof googleToken !== 'string') tokenToSend = JSON.stringify(googleToken);
 
-            const redirectUrl = res.request.res.responseUrl;
-            this.logger.log(`✅ Tpay redirect URL: ${redirectUrl}`);
+            // some libs return stringified JSON inside a string (double-serialized) — try to normalize
+            try {
+                const parsed = JSON.parse(googleToken);
+                // if parsed has protocolVersion or signature, re-stringify parsed (clean)
+                if (parsed && (parsed.protocolVersion || parsed.signature || parsed.signedMessage)) {
+                    tokenToSend = JSON.stringify(parsed);
+                }
+            } catch (e) {
+                // not JSON — fine
+            }
+
+            const crc = `order_${Date.now()}`;
+
+            const payload = {
+                id: this.merchantId,
+                amount: amount, // string format "1.00"
+                description: 'Google Pay DIRECT sandbox',
+                crc,
+                test_mode: 1,
+                result_url: this.notifyUrl,
+                return_url: this.returnOk,
+                return_error_url: this.returnErr,
+                email: 'test@client.com',
+                name: 'Test Sandbox User',
+                language: 'pl',
+                group: 166, // Google Pay channel in Tpay Classic
+                googlePayPaymentData: tokenToSend
+            };
+
+            this.logger.log(`Creating Tpay transaction (crc=${crc})...`);
+            this.logger.debug(`Payload sample (truncated): ${JSON.stringify({ id: payload.id, amount: payload.amount, crc: payload.crc, group: payload.group }).slice(0, 400)}`);
+
+            const res = await axios.post(this.tpayUrl, qs.stringify(payload), {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                maxRedirects: 0,
+                validateStatus: (s) => s === 302 || (s >= 200 && s < 400)
+            });
+
+            // capture redirect URL returned by Tpay (Location)
+            const redirectUrl = res.headers?.location || (res.request?.res?.responseUrl);
+            this.logger.log(`Tpay returned redirectUrl: ${redirectUrl}`);
 
             return { success: true, crc, redirectUrl };
-        } catch (error: any) {
-            this.logger.error('❌ Tpay create error:', error.response?.data || error.message);
-            return { success: false, error: error.response?.data || error.message };
+        } catch (err: any) {
+            this.logger.error('Tpay create transaction error', err.response?.data || err.message);
+            return { success: false, error: err.response?.data || err.message };
         }
     }
 
-    /**
-     * ✅ Obsługa NOTIFY z Tpay + MD5 verify
-     */
     handleNotify(body: any) {
-        this.logger.log('📩 Notify:', body);
+        this.logger.log('Tpay notify received', body);
 
-        const md5Input =
-            this.merchantId +
-            body.tr_id +
-            body.tr_amount +
-            body.tr_crc +
-            this.verifyCode;
+        const required = ['tr_id', 'tr_amount', 'tr_crc', 'md5sum', 'tr_status'];
+        for (const f of required) {
+            if (!body[f]) throw new Error(`Missing notify field: ${f}`);
+        }
 
+        const md5Input = this.merchantId + body.tr_id + body.tr_amount + body.tr_crc + this.verifyCode;
         const localMd5 = crypto.createHash('md5').update(md5Input).digest('hex');
 
         if (localMd5 !== body.md5sum) {
-            this.logger.error('❌ Invalid signature');
+            this.logger.error('Invalid MD5 signature. local:', localMd5, 'remote:', body.md5sum);
             throw new Error('Invalid MD5 signature');
         }
 
-        this.logger.log(`✅ Payment confirmed: ${body.tr_id}`);
-        return true; // kontroler zwróci "TRUE"
+        // Here update order DB by tr_crc (body.tr_crc) -> set paid or error
+        // For demo just log
+        this.logger.log(`Payment status for tr_id=${body.tr_id}, crc=${body.tr_crc}, status=${body.tr_status}`);
+
+        return true;
     }
 }
