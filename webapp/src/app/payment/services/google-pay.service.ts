@@ -1,50 +1,80 @@
 import { Injectable } from '@angular/core';
-import { GooglePayLoaderService } from './google-pay-loader.service';
-import { from, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
-import {ConfigurationService} from '../../common/services/configuration.service';
-import {Cologne} from '../../common/model/interfaces';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
-import {AuthService} from '../../auth/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { from, Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
-@Injectable({
-  providedIn: 'root'
-})
+declare const google: any;
+
+@Injectable({ providedIn: 'root' })
 export class GooglePayService {
+  private paymentsClient!: any;
+  private environment: 'TEST' | 'PRODUCTION' = 'TEST';
 
-  private readonly API_URL = ConfigurationService.getApiUrl();
-  private paymentsClient: any;
-  constructor(private authService: AuthService,
-              private loader: GooglePayLoaderService,
-              private http: HttpClient) {}
+  constructor(private http: HttpClient) {}
 
-  init(): Observable<void> {
-    return this.loader.loadScript().pipe(
-      map(() => {
-        this.paymentsClient = new (window as any).google.payments.api.PaymentsClient({ environment: 'TEST' });
+  /**
+   * Initialize PaymentsClient (must be called before isReadyToPay / loadPaymentData)
+   */
+  init(): Observable<boolean> {
+    try {
+      if (!this.paymentsClient) {
+        this.paymentsClient = new google.payments.api.PaymentsClient({
+          environment: this.environment
+        });
+        console.log('GooglePayService: PaymentsClient created', this.paymentsClient);
+      } else {
+        console.log('GooglePayService: PaymentsClient already exists');
+      }
+      return of(true);
+    } catch (err) {
+      console.error('GooglePayService.init() error', err);
+      return of(false);
+    }
+  }
+
+  /**
+   * isReadyToPay wrapper — MUST include allowedPaymentMethods
+   * Returns Observable<boolean>
+   */
+  isReadyToPay(): Observable<boolean> {
+    const request = {
+      apiVersion: 2,
+      apiVersionMinor: 0,
+      // IMPORTANT: allowedPaymentMethods must exist; use CARD for web sandbox isReadyToPay
+      allowedPaymentMethods: [
+        {
+          type: 'CARD',
+          parameters: {
+            allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
+            allowedCardNetworks: ['VISA', 'MASTERCARD']
+          }
+        }
+      ]
+    };
+
+    if (!this.paymentsClient) {
+      console.warn('GooglePayService.isReadyToPay() called before init()');
+      return of(false);
+    }
+
+    // paymentsClient.isReadyToPay returns a Promise
+    return from(this.paymentsClient.isReadyToPay(request)).pipe(
+      map((res: any) => {
+        console.log('GooglePayService.isReadyToPay response:', res);
+        return !!res && !!res.result;
+      }),
+      catchError((err) => {
+        console.error('GooglePayService.isReadyToPay ERROR:', err);
+        throw err;
       })
     );
   }
 
-  isReadyToPay(): Observable<boolean> {
-    const request = {
-      allowedPaymentMethods: [{
-        type: 'CARD',
-        parameters: {
-          allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-          allowedCardNetworks: ['VISA', 'MASTERCARD']
-        }
-      }]
-    };
-
-    return from(
-      this.paymentsClient.isReadyToPay(request) as Promise<{ result: boolean }>
-    ).pipe(
-      map(response => response.result)
-    );
-  }
-
-  getPaymentDataRequest(price: string) {
+  /**
+   * Create full PaymentDataRequest used by the <google-pay-button> (DIRECT tokenization)
+   * You can call this from component or leave the component's own paymentRequest.
+   */
+  createPaymentRequest(publicKeyPem: string, totalPrice = '1.00', currency = 'PLN') {
     return {
       apiVersion: 2,
       apiVersionMinor: 0,
@@ -53,37 +83,47 @@ export class GooglePayService {
           type: 'CARD',
           parameters: {
             allowedAuthMethods: ['PAN_ONLY', 'CRYPTOGRAM_3DS'],
-            allowedCardNetworks: ['VISA', 'MASTERCARD']
+            allowedCardNetworks: ['VISA', 'MASTERCARD'],
+            billingAddressRequired: false
           },
           tokenizationSpecification: {
             type: 'DIRECT',
             parameters: {
               protocolVersion: 'ECv2',
-              publicKey: 'LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0NCk1JR2ZNQTBHQ1NxR1NJYjNEUUVCQVFVQUE0R05BRENCaVFLQmdRRE5FUFRjejlRZHJHT0VZVjN1SkJoKzBWa3UNCnVnY3FIRXdQWXhmc3F2T2Mwa1NRUU1ZeUdFSHZma1krWkUvZU9jcUNrczN4ZjNWRTBXbGxOKzhhSlJxSFhVdE4NClQ2alZ5M1hqajVrQzE0bGRsSWQzQ1N6dXhscGpDakQzR0dyeTg4ckZrc0RVMFRYTXlMTUI0dlJXTTZhV0hsd24NCnU4NXpwVDZvdGxnU05YZ0J6UUlEQVFBQg0KLS0tLS1FTkQgUFVCTElDIEtFWS0tLS0t'
+              publicKey: publicKeyPem // must be PEM string with BEGIN/END
             }
           }
         }
       ],
       merchantInfo: {
-        merchantId: '408446', // testowy Merchant ID
-        merchantName: 'Demo Merchant'
+        merchantName: 'Funcluster Daniel Jurkowski',
+        merchantId: '' // sandbox -> empty
       },
       transactionInfo: {
         totalPriceStatus: 'FINAL',
-        totalPrice: price,
-        currencyCode: 'PLN'
-      }
-    };
+        totalPrice: totalPrice,
+        currencyCode: currency
+      },
+      callbackIntents: ['PAYMENT_AUTHORIZATION']
+    } as google.payments.api.PaymentDataRequest;
   }
 
-  requestPayment(price: string): Observable<any> {
-    const paymentDataRequest = this.getPaymentDataRequest(price);
-    return from(
-      this.paymentsClient.loadPaymentData(paymentDataRequest) as Promise<any>
-    );
-  }
-
+  /**
+   * finalizePayment: send Google Pay token + amount to your backend (/payments)
+   * returns Observable of backend response
+   */
   finalizePayment(token: string, amount: string, currency: string): Observable<any> {
-    return this.http.post<{ success: boolean; redirectUrl?: string; error?: string }>(`${this.API_URL}/payments`, { token, amount, currency });
+    const body = { token, amount, currency };
+    console.log('GooglePayService.finalizePayment ->', body);
+    return this.http.post('/payments', body).pipe(
+      map((res) => {
+        console.log('GooglePayService.finalizePayment response:', res);
+        return res;
+      }),
+      catchError((err) => {
+        console.error('GooglePayService.finalizePayment ERROR:', err);
+        throw err;
+      })
+    );
   }
 }
