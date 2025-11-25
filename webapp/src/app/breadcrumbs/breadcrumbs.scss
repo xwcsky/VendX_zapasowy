@@ -1,0 +1,23 @@
+.breadcrumbs ul {
+  display: flex;             /* układa w jednym wierszu */
+  gap: 8px;                  /* odstęp między elementami */
+  list-style: none;          /* usuwa bullet pointy */
+  padding: 0;
+  margin: 0;
+  align-items: center;
+}
+
+.breadcrumbs li {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+.breadcrumbs a {
+  text-decoration: none;
+  color: #007bff;            /* niebieski link */
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}

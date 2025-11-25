@@ -1,0 +1,17 @@
+<nav class="breadcrumbs">
+  <ul>
+    <li *ngFor="let bc of breadcrumbs; let last = last">
+      <a 
+        *ngIf="!last" 
+        (click)="handleClick(bc.url)"
+        style="cursor: pointer;"
+      >
+        {{ bc.label }}
+      </a>
+
+      <span *ngIf="last">{{ bc.label }}</span>
+
+      <span *ngIf="!last"> > </span>
+    </li>
+  </ul>
+</nav>

@@ -4,6 +4,10 @@
     <button (click)="logout()">Logout</button>
   </header>
 
+  <app-breadcrumbs 
+  [showPaymentStep]="payConfirmed" (breadcrumbClick)="onBreadcrumbClick($event)"
+></app-breadcrumbs>
+
   @if (!payConfirmed) {
     <div>
       <app-colognes-list (selectedCologne)="setCologneId($event)"></app-colognes-list>

@@ -9,19 +9,19 @@ import {ConfirmComponent} from './payment/views/confirm.component/confirm.compon
 import {ErrorComponent} from './payment/views/error.component/error.component';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'payment', component: PayComponent },
-  { path: 'payment/confirm', component: ConfirmComponent },
-  { path: 'payment/error', component: ErrorComponent },
+  { path: 'login', component: LoginComponent, data: { breadcrumb: 'Logowanie' } },
+  { path: 'payment', component: PayComponent, data: { breadcrumb: 'Płatność' } },
+  { path: 'payment/confirm', component: ConfirmComponent, data: { breadcrumb: 'Potwierdzenie' } },
+  { path: 'payment/error', component: ErrorComponent, data: { breadcrumb: 'Błąd płatności' } },
+  
   {
     path: '',
     canActivate: [authGuard],
     children: [
-      { path: 'shop', component: ShopComponent },
-      { path: 'admin', component: AdminComponent },
+      { path: 'shop', component: ShopComponent, data: { breadcrumb: 'Sklep' } },
+      { path: 'admin', component: AdminComponent, data: { breadcrumb: 'Panel admina' } },
       { path: '', redirectTo: 'shop', pathMatch: 'full' },
     ],
   },
-
   { path: '**', redirectTo: '' },
 ];
