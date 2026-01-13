@@ -1,3 +1,4 @@
+
 <div class="p-5 bg-light min-vh-100">
   <header class="d-flex justify-content-between">
     <h1>{{ !payConfirmed ? 'Wybierz zapach' : 'Zapłać' }}</h1>
@@ -30,6 +31,35 @@
         [colorLight]="'#ffffff'">
       </qrcode>
       <p class="caption">Zeskanuj kod, aby zapłacić</p>
+      <!-- Rabat-->
+      <div class="discount-box mb-4 d-flex gap-2 w-75">
+        <input 
+          type="text"
+          placeholder="Kod rabatowy"
+          [(ngModel)]="discountCode"
+          class="form-control"
+        />
+
+        <button (click)="applyDiscount()" class="btn btn-primary">
+          Zastosuj
+        </button>
+      </div>
+    
+      <!-- info o rabacie -->
+      <div *ngIf="discountPercent > 0" class="text-success mb-3">
+        Zastosowano rabat: {{ discountPercent }}%
+      </div>
+    
+      <!-- QR kod pojawia się dopiero po kliknięciu Zastosuj -->
+      <div *ngIf="qrReady">
+        <qrcode
+          [qrdata]="qrData"
+          [width]="250"
+          [margin]="2"
+          [errorCorrectionLevel]="'M'">
+        </qrcode>
+        <p class="caption">Zeskanuj kod, aby zapłacić</p>
+      </div>
     </div>
   }
 </div>

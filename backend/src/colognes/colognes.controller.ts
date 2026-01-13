@@ -8,7 +8,7 @@ export class ColognesController {
 
     constructor(private readonly colognesService: ColognesService) {}
     // GET /orders - pobiera wszystkie zamówienia
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Get()
     async findAll() {
         return this.colognesService.findAll();
