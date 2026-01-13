@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import * as qs from 'qs';
 import * as crypto from 'crypto';
+import { OrdersService } from '../orders/orders.service';
 
 @Injectable()
 export class PaymentsService {
@@ -18,6 +19,8 @@ export class PaymentsService {
      * googleToken: string (may be JSON-stringified)
      * amount: string (e.g. "1.00")
      */
+    constructor(private readonly ordersService: OrdersService) {}
+
     async createGooglePayTransaction(googleToken: string, amount: string, currency = 'PLN') {
         try {
             // ensure token is string; if it's JSON object stringify it
@@ -35,12 +38,12 @@ export class PaymentsService {
                 // not JSON — fine
             }
 
-            const crc = `order_${Date.now()}`;
+            const crc = `order_${scentId}_${deviceId}_${Date.now()}`;
 
             const payload = {
                 id: this.merchantId,
                 amount: amount, // string format "1.00"
-                description: 'Google Pay DIRECT sandbox',
+                description: `Order: ${scentId} @ ${deviceId}`,
                 crc,
                 test_mode: 1,
                 result_url: this.notifyUrl,
@@ -92,6 +95,33 @@ export class PaymentsService {
         // Here update order DB by tr_crc (body.tr_crc) -> set paid or error
         // For demo just log
         this.logger.log(`Payment status for tr_id=${body.tr_id}, crc=${body.tr_crc}, status=${body.tr_status}`);
+
+        if (body.tr_status === 'TRUE') {
+            try {
+                // Parsowanie CRC: order_SCENT_DEVICE_TIMESTAMP
+                const parts = body.tr_crc.split('_');
+                // Spodziewamy się min. 4 części: ["order", "scentUUID", "deviceID", "timestamp"]
+                if (parts.length >= 4 && parts[0] === 'order') {
+                    const scentId = parts[1];
+                    const deviceId = parts[2];
+                    
+                    this.logger.log(`Creating order in DB for scentId=${scentId}, deviceId=${deviceId}`);
+                    
+                    await this.ordersService.create({
+                        scentId: scentId,
+                        deviceId: deviceId
+                    });
+                    
+                    this.logger.log('Order created successfully.');
+                } else {
+                    this.logger.warn(`CRC format not recognized for auto-order creation: ${body.tr_crc}`);
+                }
+            } catch (error) {
+                this.logger.error('Error creating order from payment notification', error);
+                // Rzucamy błąd, aby Tpay ewentualnie ponowił próbę (chyba że błąd jest logiczny)
+                throw error;
+            }
+        }
 
         return true;
     }

@@ -112,8 +112,8 @@ export class GooglePayService {
    * finalizePayment: send Google Pay token + amount to your backend (/payments)
    * returns Observable of backend response
    */
-  finalizePayment(token: string, amount: string, currency: string): Observable<any> {
-    const body = { token, amount, currency };
+  finalizePayment(token: string, amount: string, scentId: string, deviceId: string, currency: string): Observable<any> {
+    const body = { token, amount, scentId, deviceId, currency };
     console.log('GooglePayService.finalizePayment ->', body);
     return this.http.post('/payments', body).pipe(
       map((res) => {

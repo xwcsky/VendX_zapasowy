@@ -11,17 +11,21 @@ export class PaymentsController {
     async createPayment(
         @Body('token') googleToken: string,
         @Body('amount') amount: string,
+        @Body('scentId') scentId: string,   
+        @Body('deviceId') deviceId: string,
         @Body('currency') currency: string = 'PLN'
     ) {
         if (!googleToken) return { success: false, error: 'token is required' };
+        if (!scentId || !deviceId) return { success: false, error: 'scentId and deviceId are required' };
         if (!amount) amount = '1.00';
-        return this.paymentsService.createGooglePayTransaction(googleToken, amount, currency);
+        return this.paymentsService.createGooglePayTransaction(googleToken, amount, scentId, deviceId ,currency);
+        
     }
 
     @Post('notify')
     async handleNotify(@Body() body: any, @Res() res: Response) {
         try {
-            this.paymentsService.handleNotify(body);
+            await this.paymentsService.handleNotify(body);
             // exactly "TRUE"
             return res.status(HttpStatus.OK).send('TRUE');
         } catch (e: any) {
