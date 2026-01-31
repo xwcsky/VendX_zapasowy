@@ -21,7 +21,7 @@ export class PaymentsService {
      */
     constructor(private readonly ordersService: OrdersService) {}
 
-    async createGooglePayTransaction(googleToken: string, amount: string, currency = 'PLN') {
+    async createGooglePayTransaction(googleToken: string, amount: string, scentId: string, deviceId: string, currency = 'PLN') {
         try {
             // ensure token is string; if it's JSON object stringify it
             let tokenToSend = googleToken;
