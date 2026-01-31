@@ -7,13 +7,19 @@ import { ConfigurationService } from '../../common/services/configuration.servic
 export interface CreateOrderDto {
   scentId: string;
   deviceId: string;
+  quantity: number;
 }
 
 export interface Order {
   id: string;
   scent_id: string;
-  device_id: string;
-  creation_date: string; // ISO string
+  status?: string;
+  quantity?: number;
+  amount?: number;
+  creation_date?: string;
+  scentId?: string;
+  deviceId?: string;
+  creationDate?: string;
 }
 
 @Injectable({
@@ -24,11 +30,11 @@ export class OrdersApiService {
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 
-  createOrder(dto: CreateOrderDto): Observable<Order> {
-    return this.http.post<Order>(`${this.API_URL}/colognes`, dto);
-  }
+  createOrder(data: { scentId: string, deviceId: string, quantity: number }) {
+    return this.http.post<any>(`${this.API_URL}/orders`, data);
+}
 
   getOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(`${this.API_URL}/colognes`);
+    return this.http.get<Order[]>(`${this.API_URL}/orders`);
   }
 }

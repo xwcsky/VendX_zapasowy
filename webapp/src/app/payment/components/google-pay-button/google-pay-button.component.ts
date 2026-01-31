@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, Input } from '@angular/core';
 import { GooglePayService } from '../../services/google-pay.service';
 import { switchMap } from 'rxjs/operators';
 import { GooglePayButtonModule } from '@google-pay/button-angular';
@@ -13,6 +13,8 @@ declare const google: any;
   styleUrls: ['./google-pay-button.component.scss']
 })
 export class GooglePayButtonComponent implements OnInit {
+  @Input() scentId!: string;
+  @Input() deviceId!: string;
   ready = false;
   paymentRequest!: google.payments.api.PaymentDataRequest;
 
@@ -63,7 +65,7 @@ u85zpT6otlgSNXgBzQIDAQAB
     const amount = this.paymentRequest.transactionInfo.totalPrice;
     const currency = this.paymentRequest.transactionInfo.currencyCode;
 
-    this.googlePayService.finalizePayment(token, amount, currency).subscribe({
+    this.googlePayService.finalizePayment(token, amount,this.scentId, this.deviceId, currency).subscribe({
       next: (res: any) => {
         if (res.success && res.redirectUrl) {
           console.log('✅ Backend OK, redirect:', res.redirectUrl);
