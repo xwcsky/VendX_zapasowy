@@ -76,7 +76,7 @@ export class PaymentsService {
         }
     }
 
-    handleNotify(body: any) {
+    async handleNotify(body: any) {
         this.logger.log('Tpay notify received', body);
 
         const required = ['tr_id', 'tr_amount', 'tr_crc', 'md5sum', 'tr_status'];
@@ -109,7 +109,8 @@ export class PaymentsService {
                     
                     await this.ordersService.create({
                         scentId: scentId,
-                        deviceId: deviceId
+                        deviceId: deviceId,
+                        quantity: 1
                     });
                     
                     this.logger.log('Order created successfully.');
