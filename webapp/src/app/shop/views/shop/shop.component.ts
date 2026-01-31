@@ -25,6 +25,7 @@ import { FormsModule } from '@angular/forms';
             this.payConfirmed = true;
             this.showPaymentStep = true;
          
+            this.generateQr();
           }
           onBreadcrumbClick(url: string) {
             this.resetPaymentState();
@@ -63,13 +64,13 @@ import { FormsModule } from '@angular/forms';
               const finalUrl = `${baseUrl}?scentId=${scentId}&deviceId=${deviceId}&quantity=${quantity}`;
           
               // Mały timeout dla odświeżenia widoku
-              setTimeout(() => {
+              
                 this.qrData = finalUrl;
                 this.qrReady = true;
                 console.log('Wygenerowano QR dla URL:', this.qrData);
-              }, 0);
+              
             }
-            
+
              resetPaymentState() {
                this.discountCode = '';
                this.discountPercent = 0;

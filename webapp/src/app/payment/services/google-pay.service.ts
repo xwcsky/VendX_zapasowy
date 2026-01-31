@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { from, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { ConfigurationService } from '../../common/services/configuration.service';
 
 declare const google: any;
 
@@ -9,6 +10,8 @@ declare const google: any;
 export class GooglePayService {
   private paymentsClient!: any;
   private environment: 'TEST' | 'PRODUCTION' = 'TEST';
+
+  private readonly API_URL = ConfigurationService.getApiUrl();
 
   constructor(private http: HttpClient) {}
 
@@ -87,17 +90,19 @@ export class GooglePayService {
             billingAddressRequired: false
           },
           tokenizationSpecification: {
-            type: 'DIRECT',
+            type: 'PAYMENT_GATEWAY', //Tylko dla testu
             parameters: {
-              protocolVersion: 'ECv2',
-              publicKey: publicKeyPem // must be PEM string with BEGIN/END
+              'gateway': 'example',
+              'gatewayMerchantId': 'exampleGatewayMerchantId'
+              // protocolVersion: 'ECv2',
+              // publicKey: publicKeyPem // must be PEM string with BEGIN/END
             }
           }
         }
       ],
       merchantInfo: {
         merchantName: 'Funcluster Daniel Jurkowski',
-        merchantId: '' // sandbox -> empty
+        merchantId: '12345678901234567890' // Testowe ID akceptowane przez Sandbox
       },
       transactionInfo: {
         totalPriceStatus: 'FINAL',
@@ -115,7 +120,7 @@ export class GooglePayService {
   finalizePayment(token: string, amount: string, scentId: string, deviceId: string, currency: string): Observable<any> {
     const body = { token, amount, scentId, deviceId, currency };
     console.log('GooglePayService.finalizePayment ->', body);
-    return this.http.post('/payments', body).pipe(
+    return this.http.post('${this.API_URL}/payments', body).pipe(
       map((res) => {
         console.log('GooglePayService.finalizePayment response:', res);
         return res;
