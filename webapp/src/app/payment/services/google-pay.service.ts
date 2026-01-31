@@ -120,7 +120,7 @@ export class GooglePayService {
   finalizePayment(token: string, amount: string, scentId: string, deviceId: string, currency: string): Observable<any> {
     const body = { token, amount, scentId, deviceId, currency };
     console.log('GooglePayService.finalizePayment ->', body);
-    return this.http.post('${this.API_URL}/payments', body).pipe(
+    return this.http.post(`${this.API_URL}/payments`, body).pipe(
       map((res) => {
         console.log('GooglePayService.finalizePayment response:', res);
         return res;
