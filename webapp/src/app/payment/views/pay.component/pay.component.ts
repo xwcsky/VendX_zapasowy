@@ -24,7 +24,7 @@ export class PayComponent implements OnInit, OnDestroy {
   scentId: string = '';
   deviceId: string = '';
   orderId: string = ''; // Tu zapiszemy ID zamówienia z bazy
-
+ 
   private socketSub: Subscription | undefined;
 
   constructor(

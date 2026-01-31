@@ -59,6 +59,12 @@
           [errorCorrectionLevel]="'M'">
         </qrcode>
         <p class="caption">Zeskanuj kod, aby zapłacić</p>
+        <div class="alert alert-info mt-3">
+          <p class="mb-1"><small>🛠 Tryb developerski:</small></p>
+          <a [href]="qrData" target="_blank" class="btn btn-outline-primary btn-sm">
+              📲 Kliknij, by otworzyć "Telefon Klienta"
+          </a>
+      </div>
       </div>
     </div>
   }

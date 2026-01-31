@@ -46,23 +46,30 @@ import { FormsModule } from '@angular/forms';
              }
              
 
-            generateQr() {
-               // najpierw reset starego QR
-               this.qrReady = false;
-               this.qrData = '';
-             
-               const baseUrl = ConfigurationService.getHostUrl() + '/payment';
-               const payload = {
-                 cologneId: this.cologneId,
-                 discount: this.discountPercent
-               };
-             
-               // mały timeout, żeby Angular odświeżył DOM
-               setTimeout(() => {
-                 this.qrData = baseUrl + '?data=' + encodeURIComponent(JSON.stringify(payload));
-                 this.qrReady = true;
-               }, 0);
-             }
+             generateQr() {
+              this.qrReady = false;
+              this.qrData = '';
+          
+              // Upewnij się, że ścieżka to /payment/pay (zgodnie z routingiem)
+              const baseUrl = ConfigurationService.getHostUrl() + '/payment/pay';
+              
+              // Zamiast pakować w JSON, budujemy normalne parametry URL
+              // PayComponent oczekuje: scentId, deviceId, quantity
+              const scentId = this.cologneId;
+              const deviceId = 'test-device-01'; // Tymczasowo na sztywno
+              const quantity = 1;
+          
+              // Budujemy pełny URL
+              const finalUrl = `${baseUrl}?scentId=${scentId}&deviceId=${deviceId}&quantity=${quantity}`;
+          
+              // Mały timeout dla odświeżenia widoku
+              setTimeout(() => {
+                this.qrData = finalUrl;
+                this.qrReady = true;
+                console.log('Wygenerowano QR dla URL:', this.qrData);
+              }, 0);
+            }
+            
              resetPaymentState() {
                this.discountCode = '';
                this.discountPercent = 0;

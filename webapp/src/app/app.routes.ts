@@ -12,7 +12,7 @@ export const routes: Routes = [
   // --- STREFY PUBLICZNE (Dostępne dla każdego) ---
   
   // 1. Ekran startowy (wygaszacz)
-  { path: 'screensaver', component: ScreensaverComponent, data: { breadcrumb: 'Start' } },
+  { path: 'shop', component: ScreensaverComponent, data: { breadcrumb: 'Sklep' } },
   
   // 2. Logowanie
   { path: 'login', component: LoginComponent, data: { breadcrumb: 'Logowanie' } },
