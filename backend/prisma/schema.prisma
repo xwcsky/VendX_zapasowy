@@ -18,14 +18,18 @@ model Colognes {
 }
 
 model Orders {
-  id            String          @id @default(uuid())
-  scent_id      String
-  device_id     String
-  creation_date DateTime        @default(now())
-  cologne       Colognes        @relation(fields: [scent_id], references: [id])
+  id             String   @id @default(uuid())
+  scent_id       String
+  device_id      String   // ID urządzenia (Raspberry Pi), z którego przyszło zamówienie
+  status         String   @default("PENDING") // Status: 'PENDING', 'PAID', 'FAILED'
+  quantity       Int      @default(1)         // Ilość "psików" wybrana przez klienta
+  amount         Decimal  @default(0.00)      // Kwota transakcji (dla celów księgowych)
+  transaction_id String?                      // ID płatności z Tpay (opcjonalne, bo uzupełniane dopiero po powrocie z bramki)
+  creation_date  DateTime @default(now())
+  cologne        Colognes @relation(fields: [scent_id], references: [id])
+
   @@map("orders")
 }
-
 model Users {
   id            Int             @id @default(autoincrement())
   user_name     String @unique
