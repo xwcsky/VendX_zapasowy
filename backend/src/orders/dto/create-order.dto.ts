@@ -1,5 +1,15 @@
+import { IsString, IsNumber, IsNotEmpty } from 'class-validator';
+
 export class CreateOrderDto {
-    scentId: string;
-    deviceId: string;
-    quantity: number; 
-  }
+  @IsString()
+  @IsNotEmpty()
+  scentId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  deviceId: string;
+
+  @IsNumber()
+  @IsNotEmpty()
+  quantity: number;
+}

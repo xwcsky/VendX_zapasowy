@@ -8,14 +8,14 @@ export class OrdersController {
     constructor(private readonly ordersService: OrdersService) {}
 
     // GET /orders - pobiera wszystkie zamówienia
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Get()
     async findAll() {
         return this.ordersService.findAll();
     }
 
     // POST /orders - tworzy nowe zamówienie
-    @UseGuards(JwtAuthGuard)
+    // @UseGuards(JwtAuthGuard)
     @Post()
     async create(@Body() dto: CreateOrderDto) {
         return this.ordersService.create(dto);

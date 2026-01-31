@@ -1,7 +1,7 @@
 // backend/test-flow.js
 // Ten skrypt wymaga Node.js v18+ (obsługa fetch)
 
-const API_URL = 'http://127.0.0.1:3000';
+const API_URL = 'http://127.0.0.1:8080';
 
 async function runTest() {
   console.log('🔄 1. TWORZENIE ZAMÓWIENIA...');
