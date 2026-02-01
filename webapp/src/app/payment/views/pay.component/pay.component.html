@@ -1,21 +1,27 @@
 <div class="d-flex flex-column justify-content-center align-items-center min-vh-100">
   <h1 class="mb-5 text-center">Wybierz sposób płatności</h1>
+  
   @if (system === OSType.iOS) {
     <app-apple-pay-button
-    [scentId]="scentId" 
-    [deviceId]="deviceId">
-  </app-apple-pay-button>
+      [scentId]="scentId" 
+      [deviceId]="deviceId">
+    </app-apple-pay-button>
+
   } @else if (system === OSType.Android) {
     <app-google-pay-button 
-    [scentId]="scentId" 
-    [deviceId]="deviceId">
-  </app-google-pay-button>
+      [scentId]="scentId" 
+      [deviceId]="deviceId">
+    </app-google-pay-button>
+
   } @else {
     <app-apple-pay-button
-    [scentId]="scentId" 
-    [deviceId]="deviceId">
-  </app-apple-pay-button>
-    <app-google-pay-button></app-google-pay-button>
+      [scentId]="scentId" 
+      [deviceId]="deviceId">
+    </app-apple-pay-button>
+    
+    <app-google-pay-button
+      [scentId]="scentId" 
+      [deviceId]="deviceId">
+    </app-google-pay-button>
   }
 </div>
-

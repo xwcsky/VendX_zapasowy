@@ -14,7 +14,7 @@ export class ConfirmComponent {
 
   protected readonly OSType = OSType;
   orderId: string = '';
-  secondsLeft: number = 3; // Czas wyświetlania komunikatu
+  secondsLeft: number = 10; // Czas wyświetlania komunikatu
 
   constructor(private router: Router, private route: ActivatedRoute) {}
 

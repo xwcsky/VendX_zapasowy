@@ -11,8 +11,8 @@ import { ScreensaverComponent } from './screensaver/screensaver'; // Upewnij si�
 export const routes: Routes = [
   // --- STREFY PUBLICZNE (Dostępne dla każdego) ---
   
-  // 1. Ekran startowy (wygaszacz)
-  { path: 'shop', component: ScreensaverComponent, data: { breadcrumb: 'Sklep' } },
+  // 1. Ekran startowy 
+  { path: 'shop', component: ShopComponent, data: { breadcrumb: 'Sklep' } },
   
   // 2. Logowanie
   { path: 'login', component: LoginComponent, data: { breadcrumb: 'Logowanie' } },
