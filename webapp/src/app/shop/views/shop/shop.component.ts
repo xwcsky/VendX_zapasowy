@@ -4,6 +4,8 @@ import { ConfigurationService } from '../../../common/services/configuration.ser
 import { BreadcrumbsComponent } from '../../../breadcrumbs/breadcrumbs'; 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ColognesApiService } from '../../services/colognes-api.service';
+import { OrdersApiService } from '../../services/orders-api.service';
 
    @Component(
     { selector: 'app-shop',
@@ -15,7 +17,11 @@ import { FormsModule } from '@angular/forms';
 
         quantity: number = 1;
 
-         constructor(public authService: AuthService)
+         constructor(
+          public authService: AuthService,
+          private apiService: ColognesApiService, 
+          private ordersApiService: OrdersApiService
+        )
           { } logout(): void { this.authService.logout(); } 
 
           setCologneId(cologneId: string | undefined): void { this.cologneId = cologneId; } 
@@ -55,33 +61,44 @@ import { FormsModule } from '@angular/forms';
             qrData = '';
 
             applyDiscount() {
-               if (this.discountCode === 'TEST50') {
-                 this.discountPercent = 50;
-               } else {
-                 this.discountPercent = 0;
-                 alert('Niepoprawny kod rabatowy');
-               }
-               this.generateQr();
-             }
+              if (!this.discountCode) return;
+          
+              this.apiService.validateDiscount(this.discountCode).subscribe({
+                next: (res) => {
+                  // Backend potwierdził kod
+                  this.discountPercent = res.percent;
+                  console.log(`Kod poprawny: ${res.code}, Zniżka: ${res.percent}%`);
+                  
+                  // Jeśli 100%, odświeżamy widok (QR zniknie, bo obsłużymy to inaczej)
+                  if (this.discountPercent === 100) {
+                     this.quantity = 1; // Reset ilości lub zostaw jak chcesz
+                     this.generateQr(); // Przeładuj logikę
+                  }
+                },
+                error: (err: any) => {
+                  console.error('Błąd kodu:', err);
+                  this.discountPercent = 0;
+                  alert('Kod nieprawidłowy lub wyczerpany!');
+                }
+              });
+            }
              
 
              generateQr() {
               this.qrReady = false;
               this.qrData = '';
           
-              // Upewnij się, że ścieżka to /payment/pay (zgodnie z routingiem)
               const baseUrl = ConfigurationService.getHostUrl() + '/payment/pay';
-              
-              // Zamiast pakować w JSON, budujemy normalne parametry URL
-              // PayComponent oczekuje: scentId, deviceId, quantity
               const scentId = this.cologneId;
               const deviceId = 'test-device-01'; // Tymczasowo na sztywno
               const quantity = this.quantity;
           
               // Budujemy pełny URL
-              const finalUrl = `${baseUrl}?scentId=${scentId}&deviceId=${deviceId}&quantity=${quantity}`;
+              let finalUrl = `${baseUrl}?scentId=${scentId}&deviceId=${deviceId}&quantity=${quantity}`;
           
-              // Mały timeout dla odświeżenia widoku
+              if (this.discountPercent > 0) {
+                finalUrl += `&discountCode=${this.discountCode}`;
+             }
               
                 this.qrData = finalUrl;
                 this.qrReady = true;
@@ -100,6 +117,27 @@ import { FormsModule } from '@angular/forms';
              }
 
              
+             adminFreeDispense() {
+              if (!this.cologneId) return;
+            
+              const orderData = {
+                scentId: this.cologneId,
+                deviceId: 'test-device-01',
+                quantity: this.quantity,
+                discountCode: this.discountCode // Przekazujemy kod
+              };
+            
+              // Używamy serwisu orders-api (musisz go wstrzyknąć w konstruktorze)
+              this.ordersApiService.createOrder(orderData).subscribe({
+                next: (res: any) => {
+                   console.log('Darmowe zamówienie poszło!', res);
+                   // Przekieruj na screensaver lub pokaż sukces
+                   alert('Maszyna uruchomiona!');
+                   // Tu możesz dodać logikę powrotu do screensavera
+                },
+                error: (err: any) => alert('Błąd: ' + err.message)
+              });
+            }
              
              
            readonly ConfigurationService = ConfigurationService; }

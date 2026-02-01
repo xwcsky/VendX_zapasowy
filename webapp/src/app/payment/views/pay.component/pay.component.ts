@@ -27,6 +27,8 @@ export class PayComponent implements OnInit, OnDestroy {
   quantity: number = 1;
   private socketSub: Subscription | undefined;
 
+  discountCode: string | undefined;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,               // Do przekierowania na ekran sukcesu
@@ -40,22 +42,21 @@ export class PayComponent implements OnInit, OnDestroy {
     this.route.queryParams.subscribe(params => {
         this.scentId = params['scentId'] || '';
         this.deviceId = params['deviceId'] || '';
-        // Pobieramy ilość, domyślnie 1
         this.quantity = params['quantity'] ? Number(params['quantity']) : 1; 
+        this.discountCode = params['discountCode'];
 
-        console.log('Parametry płatności:', { scentId: this.scentId, deviceId: this.deviceId, quantity: this.quantity });
+        console.log('Parametry płatności:', { scentId: this.scentId, deviceId: this.deviceId, quantity: this.quantity, discountCode: this.discountCode });
 
-        // Jeśli mamy dane, od razu tworzymy zamówienie w tle
         if (this.scentId && this.deviceId) {
-            this.createAndListen(this.scentId, this.deviceId, this.quantity);
+            this.createAndListen(this.scentId, this.deviceId, this.quantity, this.discountCode);
         }
     });
   }
 
   // Główna logika: Tworzy zamówienie -> Łączy WebSocket -> Czeka na sukces
-  createAndListen(scentId: string, deviceId: string, quantity: number) {
+  createAndListen(scentId: string, deviceId: string, quantity: number, discountCode?: string) {
       // 1. Strzał do API Backend
-      this.ordersApi.createOrder({ scentId, deviceId, quantity }).subscribe({
+      this.ordersApi.createOrder({ scentId, deviceId, quantity, discountCode }).subscribe({
           next: (order: any) => {
               this.orderId = order.id;
               console.log('✅ Zamówienie utworzone w bazie. ID:', this.orderId);
@@ -67,11 +68,16 @@ export class PayComponent implements OnInit, OnDestroy {
               this.socketSub = this.socketService.onOrderStatus().subscribe((data) => {
                   console.log('⚡ WebSocket odebrał status:', data.status);
                   
-                  if (data.status === 'PAID') {
-                      console.log('🎉 Płatność potwierdzona! Przekierowanie...');
-                      // Przekieruj na ekran "Dziękujemy" (sprawdź czy masz taki w routingu)
-                      this.router.navigate(['/payment/confirm'], { queryParams: { orderId: this.orderId } });
-                  }
+                  if (order.status === 'PAID') {
+                    console.log('🎉 Zamówienie darmowe! Przekierowanie...');
+                    this.router.navigate(['/payment/confirm'], { queryParams: { orderId: this.orderId } });
+                    return; // Kończymy, nie trzeba WebSocketu
+                 }
+
+                 if (data.status === 'PAID') {
+                  this.router.navigate(['/payment/confirm'], { queryParams: { orderId: this.orderId } });
+                }
+
               });
           },
           error: (err) => console.error('❌ Błąd tworzenia zamówienia:', err)

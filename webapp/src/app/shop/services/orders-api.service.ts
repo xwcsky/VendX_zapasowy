@@ -30,7 +30,7 @@ export class OrdersApiService {
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 
-  createOrder(data: { scentId: string, deviceId: string, quantity: number }) {
+  createOrder(data: { scentId: string, deviceId: string, quantity: number, discountCode?: string }) {
     return this.http.post<any>(`${this.API_URL}/orders`, data);
 }
 

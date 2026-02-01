@@ -66,6 +66,22 @@
             </button>
           </div>
         </div>
+
+        <div class="discount-box ...">
+        </div>
+     
+     <div *ngIf="discountPercent === 100" class="mt-4 text-center">
+         <div class="alert alert-success">
+            <strong>Kod VIP aktywny!</strong><br>
+            Cena: 0.00 PLN
+         </div>
+         <button (click)="adminFreeDispense()" class="btn btn-success btn-lg pulse-animation">
+            🚀 URUCHOM (BEZ PŁACENIA)
+         </button>
+     </div>
+     
+     <div *ngIf="qrReady && discountPercent < 100" class="text-center">
+        </div>
     
         <div class="alert alert-info mt-3 py-2">
           <p class="mb-1"><small>🛠 Tryb developerski:</small></p>
