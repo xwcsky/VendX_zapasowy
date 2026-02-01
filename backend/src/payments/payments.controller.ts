@@ -33,7 +33,7 @@ export class PaymentsController {
     console.log(`[GooglePay] Zatwierdzam zamówienie: ${pendingOrder.id}`);
     
     // Potwierdzamy płatność
-    return this.ordersService.confirmPayment(pendingOrder.id, 'GOOGLE_PAY_DEMO_TOKEN');
+    return this.ordersService.confirmPayment(pendingOrder.id, 'GOOGLE_PAY_DEMO_TOKEN', body.amount);
   }
 
   /**
@@ -57,9 +57,10 @@ export class PaymentsController {
     const status = body.tr_status;
     const orderId = body.tr_crc;
     const transactionId = body.tr_id;
+    const amount = body.tr_amount;
 
     if (status === 'TRUE' && orderId) {
-       await this.ordersService.confirmPayment(orderId, transactionId);
+       await this.ordersService.confirmPayment(orderId, transactionId, amount);
        return 'TRUE';
     }
     return 'FALSE';
