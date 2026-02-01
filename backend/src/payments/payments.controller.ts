@@ -1,4 +1,4 @@
-import { Controller, Post, Body, HttpCode, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, BadRequestException, NotFoundException } from '@nestjs/common';
 import { OrdersService } from '../orders/orders.service';
 
 @Controller('payments')
@@ -6,44 +6,62 @@ export class PaymentsController {
   constructor(private readonly ordersService: OrdersService) {}
 
   /**
-   * SYMULACJA PŁATNOŚCI (Dla Ciebie do testów)
-   * Użyj tego endpointu, żeby ręcznie potwierdzić płatność i uruchomić pompkę.
-   * URL: POST http://localhost:3000/payments/simulate
-   * Body: { "orderId": "tu-wklej-id-zamowienia" }
+   * 1. OBSŁUGA GOOGLE PAY (Z FRONTENDU)
+   * To jest endpoint, na który strzela Twoja aplikacja po kliknięciu "Zapłać".
+   */
+  @Post()
+  async handleGooglePay(@Body() body: any) {
+    console.log('[GooglePay] Otrzymano token:', body);
+
+    // Ponieważ frontend w finalizePayment nie wysyła orderId (tylko deviceId i scentId),
+    // musimy znaleźć, które zamówienie jest "otwarte" dla tego urządzenia.
+    
+    // Pobieramy wszystkie zamówienia (to rozwiązanie tymczasowe, w produkcji przekażemy orderId)
+    const allOrders = await this.ordersService.findAll();
+    
+    // Szukamy ostatniego zamówienia PENDING dla tego urządzenia
+    const pendingOrder = allOrders.find(o => 
+      o.deviceId === body.deviceId && 
+      o.status === 'PENDING'
+    );
+
+    if (!pendingOrder) {
+      console.error('Nie znaleziono oczekującego zamówienia dla urządzenia:', body.deviceId);
+      throw new NotFoundException('Brak oczekującego zamówienia do opłacenia');
+    }
+
+    console.log(`[GooglePay] Zatwierdzam zamówienie: ${pendingOrder.id}`);
+    
+    // Potwierdzamy płatność
+    return this.ordersService.confirmPayment(pendingOrder.id, 'GOOGLE_PAY_DEMO_TOKEN');
+  }
+
+  /**
+   * 2. SYMULACJA PŁATNOŚCI (Ręczna)
    */
   @Post('simulate')
   async simulatePayment(@Body() body: { orderId: string }) {
     if (!body.orderId) {
       throw new BadRequestException('Podaj orderId!');
     }
-
     console.log(`[SYMULACJA] Otrzymano wpłatę dla: ${body.orderId}`);
-    
-    // To wywoła całą lawinę: Zmiana w Bazie -> WebSocket -> Arduino
     return this.ordersService.confirmPayment(body.orderId, 'SIMULATED_TEST');
   }
 
   /**
-   * PRAWDZIWY WEBHOOK (Np. dla Tpay/Stripe)
-   * Tutaj przychodzą powiadomienia z bramki płatniczej.
+   * 3. WEBHOOK (Dla Tpay w przyszłości)
    */
   @Post('webhook')
   @HttpCode(200)
   async handleWebhook(@Body() body: any) {
-    console.log('[WEBHOOK] Otrzymano dane:', body);
-
-    // Przykładowa logika dla Tpay (zależy od dokumentacji bramki):
-    // Tpay wysyła np. tr_id, tr_status='TRUE', tr_crc (którym jest u nas orderId)
-    
-    const status = body.tr_status; // "TRUE" lub "FALSE"
-    const orderId = body.tr_crc;   // Nasz ID zamówienia
+    const status = body.tr_status;
+    const orderId = body.tr_crc;
     const transactionId = body.tr_id;
 
     if (status === 'TRUE' && orderId) {
        await this.ordersService.confirmPayment(orderId, transactionId);
-       return 'TRUE'; // Tpay wymaga odpowiedzi TRUE
+       return 'TRUE';
     }
-
     return 'FALSE';
   }
 }

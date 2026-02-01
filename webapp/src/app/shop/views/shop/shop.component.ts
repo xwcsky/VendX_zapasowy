@@ -12,6 +12,9 @@ import { FormsModule } from '@angular/forms';
       templateUrl: './shop.component.html', styleUrl: './shop.component.scss' }
         
       ) export class ShopComponent { cologneId: string | undefined; payConfirmed: boolean = false;
+
+        quantity: number = 1;
+
          constructor(public authService: AuthService)
           { } logout(): void { this.authService.logout(); } 
 
@@ -27,6 +30,21 @@ import { FormsModule } from '@angular/forms';
          
             this.generateQr();
           }
+
+          increaseQuantity() {
+            if (this.quantity < 5) { // Limit np. do 5
+              this.quantity++;
+              this.generateQr(); // Odśwież QR od razu po zmianie!
+            }
+          }
+
+          decreaseQuantity() {
+            if (this.quantity > 1) {
+              this.quantity--;
+              this.generateQr(); // Odśwież QR
+            }
+          }
+
           onBreadcrumbClick(url: string) {
             this.resetPaymentState();
             this.payConfirmed = false;
@@ -58,7 +76,7 @@ import { FormsModule } from '@angular/forms';
               // PayComponent oczekuje: scentId, deviceId, quantity
               const scentId = this.cologneId;
               const deviceId = 'test-device-01'; // Tymczasowo na sztywno
-              const quantity = 1;
+              const quantity = this.quantity;
           
               // Budujemy pełny URL
               const finalUrl = `${baseUrl}?scentId=${scentId}&deviceId=${deviceId}&quantity=${quantity}`;
@@ -78,6 +96,7 @@ import { FormsModule } from '@angular/forms';
                this.qrData = '';
                this.payConfirmed = false;
                this.showPaymentStep = false;
+               this.quantity = 1;
              }
 
              

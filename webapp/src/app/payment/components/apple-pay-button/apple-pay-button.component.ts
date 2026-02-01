@@ -11,4 +11,5 @@ export class ApplePayButtonComponent {
 
   @Input() scentId!: string;
   @Input() deviceId!: string;
+  @Input() quantity: number = 1;
 }

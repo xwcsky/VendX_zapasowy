@@ -15,8 +15,11 @@ declare const google: any;
 export class GooglePayButtonComponent implements OnInit {
   @Input() scentId!: string;
   @Input() deviceId!: string;
+  @Input() quantity: number = 1;
   ready = false;
   paymentRequest!: google.payments.api.PaymentDataRequest;
+
+  private readonly UNIT_PRICE = 5.00;
 
   constructor(
     private googlePayService: GooglePayService,
@@ -32,6 +35,8 @@ T6jVy3Xjj5kC14ldlId3CSzuxlpjCjD3GGry88rFksDU0TXMyLMB4vRWM6aWHlwn
 u85zpT6otlgSNXgBzQIDAQAB
 -----END PUBLIC KEY-----`;
 
+    const totalPriceStr = (this.UNIT_PRICE * this.quantity).toFixed(2);
+
     // 🧠 Inicjalizacja SDK Google Pay i sprawdzenie dostępności
     this.googlePayService
       .init()
@@ -41,7 +46,7 @@ u85zpT6otlgSNXgBzQIDAQAB
           if (isReady) {
             this.paymentRequest = this.googlePayService.createPaymentRequest(
               publicKeyPem,
-              '1.00',
+              totalPriceStr,
               'PLN'
             );
             this.ready = true;

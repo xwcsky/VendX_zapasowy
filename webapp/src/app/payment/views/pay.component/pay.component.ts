@@ -24,7 +24,7 @@ export class PayComponent implements OnInit, OnDestroy {
   scentId: string = '';
   deviceId: string = '';
   orderId: string = ''; // Tu zapiszemy ID zamówienia z bazy
- 
+  quantity: number = 1;
   private socketSub: Subscription | undefined;
 
   constructor(
@@ -41,13 +41,13 @@ export class PayComponent implements OnInit, OnDestroy {
         this.scentId = params['scentId'] || '';
         this.deviceId = params['deviceId'] || '';
         // Pobieramy ilość, domyślnie 1
-        const quantity = params['quantity'] ? Number(params['quantity']) : 1; 
+        this.quantity = params['quantity'] ? Number(params['quantity']) : 1; 
 
-        console.log('Parametry płatności:', { scentId: this.scentId, deviceId: this.deviceId, quantity });
+        console.log('Parametry płatności:', { scentId: this.scentId, deviceId: this.deviceId, quantity: this.quantity });
 
         // Jeśli mamy dane, od razu tworzymy zamówienie w tle
         if (this.scentId && this.deviceId) {
-            this.createAndListen(this.scentId, this.deviceId, quantity);
+            this.createAndListen(this.scentId, this.deviceId, this.quantity);
         }
     });
   }

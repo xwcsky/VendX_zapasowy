@@ -4,24 +4,28 @@
   @if (system === OSType.iOS) {
     <app-apple-pay-button
       [scentId]="scentId" 
-      [deviceId]="deviceId">
+      [deviceId]="deviceId"
+      [quantity]="quantity">
     </app-apple-pay-button>
 
   } @else if (system === OSType.Android) {
     <app-google-pay-button 
       [scentId]="scentId" 
-      [deviceId]="deviceId">
+      [deviceId]="deviceId"
+      [quantity]="quantity">
     </app-google-pay-button>
 
   } @else {
     <app-apple-pay-button
       [scentId]="scentId" 
-      [deviceId]="deviceId">
+      [deviceId]="deviceId"
+      [quantity]="quantity">
     </app-apple-pay-button>
     
     <app-google-pay-button
       [scentId]="scentId" 
-      [deviceId]="deviceId">
+      [deviceId]="deviceId"
+      [quantity]="quantity" >
     </app-google-pay-button>
   }
 </div>
