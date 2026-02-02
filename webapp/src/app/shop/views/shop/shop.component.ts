@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core'; import { ColognesListComponent } from '../../components/colognes-list/colognes-list.component';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core'; import { ColognesListComponent } from '../../components/colognes-list/colognes-list.component';
 import { AuthService } from '../../../auth/auth.service'; import { QRCodeComponent } from 'angularx-qrcode';
 import { ConfigurationService } from '../../../common/services/configuration.service';
 import { BreadcrumbsComponent } from '../../../breadcrumbs/breadcrumbs'; 
@@ -6,6 +6,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ColognesApiService } from '../../services/colognes-api.service';
 import { OrdersApiService } from '../../services/orders-api.service';
+import { SocketService } from '../../../common/services/socket.service';
+import { Router } from '@angular/router';
 
    @Component(
     { selector: 'app-shop',
@@ -13,17 +15,48 @@ import { OrdersApiService } from '../../services/orders-api.service';
       imports: [ColognesListComponent, QRCodeComponent, BreadcrumbsComponent, FormsModule, CommonModule],
       templateUrl: './shop.component.html', styleUrl: './shop.component.scss' }
         
-      ) export class ShopComponent { cologneId: string | undefined; payConfirmed: boolean = false;
+      ) export class ShopComponent implements OnInit, OnDestroy { cologneId: string | undefined; payConfirmed: boolean = false;
 
         quantity: number = 1;
+        deviceId = 'test-device-01'; // To powinno być w konfiguracji, ale na razie ok
+        dispensing = false; // Flaga, czy trwa wydawanie
+        private socketSub: any;
 
          constructor(
+          private router: Router,
           public authService: AuthService,
+          private socketService: SocketService,
           private apiService: ColognesApiService, 
           private ordersApiService: OrdersApiService,
           private cdr: ChangeDetectorRef
         )
           { } logout(): void { this.authService.logout(); } 
+
+          ngOnInit() {
+            // 👇 1. Kiosk dołącza do nasłuchiwania na swoje zdarzenia
+            this.socketService.joinDeviceRoom(this.deviceId);
+        
+            // 👇 2. Czekamy na sygnał "START_PUMP" (czyli opłacono)
+            this.socketSub = this.socketService.onPumpCommand().subscribe((data) => {
+               console.log('🎉 Kiosk odebrał płatność! Wydawanie...', data);
+               this.handleDispenseSuccess();
+            });
+          }
+
+          ngOnDestroy() {
+            if (this.socketSub) this.socketSub.unsubscribe();
+          }
+
+          handleDispenseSuccess() {
+            this.dispensing = true; // Możesz użyć tego w HTML żeby pokazać inny ekran
+            this.qrReady = false;   // Ukryj QR
+            this.cdr.detectChanges();
+        
+            // Po 5 sekundach (czas na "psiknięcie") wracamy do wygaszacza
+            setTimeout(() => {
+              this.router.navigate(['/screensaver']);
+            }, 5000);
+          }
 
           setCologneId(cologneId: string | undefined): void { this.cologneId = cologneId; } 
 

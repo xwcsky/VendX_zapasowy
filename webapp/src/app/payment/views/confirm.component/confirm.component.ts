@@ -24,13 +24,5 @@ export class ConfirmComponent {
       this.orderId = params['orderId'];
     });
 
-    // Odliczanie i powrót
-    const interval = setInterval(() => {
-      this.secondsLeft--;
-      if (this.secondsLeft <= 0) {
-        clearInterval(interval);
-        this.router.navigate(['/shop']); // Wracamy do wygaszacza
-      }
-    }, 1000);
   }
 }
