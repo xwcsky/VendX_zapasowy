@@ -33,6 +33,10 @@ export class OrdersService {
   async create(dto: CreateOrderDto) {
     console.log('Tworzę zamówienie:', dto);
 
+    const quantity = dto.quantity || 1;
+    const unitPrice = 5.00; // Cena za sztukę
+    const totalAmount = unitPrice * quantity; // np. 5.00 * 3 = 15.00
+
     // 1. Zapis do bazy
     const order = await this.prisma.orders.create({
       data: {
@@ -40,7 +44,7 @@ export class OrdersService {
         device_id: dto.deviceId,
         quantity: dto.quantity || 1, // Domyślnie 1 psik
         status: 'PENDING',
-        amount: 5.00, // Tu docelowo możesz pobierać cenę z bazy perfum * quantity
+        amount: totalAmount, // Tu docelowo możesz pobierać cenę z bazy perfum * quantity
       },
     });
 
@@ -54,7 +58,7 @@ export class OrdersService {
   }
 
   // Metoda wywoływana przez Webhook płatności (lub symulator)
-  async confirmPayment(orderId: string, transactionId?: string) {
+  async confirmPayment(orderId: string, transactionId?: string, paidAmount?: string | number) {
     console.log(`Potwierdzam płatność dla zamówienia: ${orderId}`);
 
     // 1. Znajdź zamówienie
@@ -77,6 +81,7 @@ export class OrdersService {
       data: {
         status: 'PAID',
         transaction_id: transactionId || 'SIMULATED',
+        amount: paidAmount ? paidAmount : undefined,
       },
     });
 

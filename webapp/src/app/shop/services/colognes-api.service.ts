@@ -23,4 +23,8 @@ export class ColognesApiService {
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     return this.http.get<Cologne[]>(`${this.API_URL}/colognes`, { headers });
   }
+
+  validateDiscount(code: string) {
+    return this.http.post<any>(`${this.API_URL}/discounts/check`, { code });
+  }
 }
