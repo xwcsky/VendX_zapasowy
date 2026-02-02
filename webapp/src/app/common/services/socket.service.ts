@@ -38,4 +38,19 @@ export class SocketService {
       this.socket.disconnect();
     }
   }
+
+  joinDeviceRoom(deviceId: string) {
+    this.socket.emit('joinDevice', deviceId);
+    console.log(`📡 Dołączono do pokoju urządzenia: ${deviceId}`);
+  }
+
+  onPumpCommand(): Observable<any> {
+    return new Observable((observer) => {
+      this.socket.on('START_PUMP', (data: any) => {
+        console.log('⚡ Otrzymano komendę START_PUMP:', data);
+        observer.next(data);
+      });
+    });
+  }
+
 }

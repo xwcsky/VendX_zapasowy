@@ -2,6 +2,10 @@
   <h1 class="mb-5 text-center">Wybierz sposób płatności</h1>
 
   @if (finalPrice) {
+    
+    <div class="mb-4 text-center">
+       <h3>Do zapłaty: {{ finalPrice }} PLN</h3>
+    </div>
 
     @if (system === OSType.iOS) {
       <app-apple-pay-button
@@ -14,8 +18,8 @@
       <app-google-pay-button 
         [scentId]="scentId" 
         [deviceId]="deviceId"
-        [quantity]="quantity">
-      </app-google-pay-button>
+        [quantity]="quantity"
+        [fixedPrice]="finalPrice"> </app-google-pay-button>
 
     } @else {
       <app-apple-pay-button
@@ -27,10 +31,14 @@
       <app-google-pay-button
         [scentId]="scentId" 
         [deviceId]="deviceId"
-        [quantity]="quantity" >
-      </app-google-pay-button>
+        [quantity]="quantity"
+        [fixedPrice]="finalPrice"> </app-google-pay-button>
    }
+
 } @else {
-  <p>Ładowanie danych płatności...</p>
+  <div class="text-center">
+    <div class="spinner-border text-primary" role="status"></div>
+    <p class="mt-2">Ładowanie danych płatności...</p>
+  </div>
 }
 </div>

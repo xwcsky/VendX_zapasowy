@@ -1,9 +1,97 @@
-<div class="p-5">
-  <header class="d-flex justify-content-between">
-    <h1>Scentify Admin panel</h1>
-    <button (click)="logout()">Logout</button>
-  </header>
-  <div>
-    System administration
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>🛠️ Panel Administratora</h1>
+    <button (click)="logout()" class="btn btn-outline-danger">Wyloguj</button>
+  </div>
+
+  <div class="row">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Generuj Nowy Kod</h5>
+        </div>
+        <div class="card-body">
+          <form (ngSubmit)="generateCode()">
+            <div class="mb-3">
+              <label class="form-label">Kod Rabatowy</label>
+              <input type="text" [(ngModel)]="newCode.code" name="code" 
+                     class="form-control" placeholder="np. VENDX50" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Zniżka (%)</label>
+              <input type="number" [(ngModel)]="newCode.percent" name="percent" 
+                     class="form-control" min="1" max="100">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Liczba użyć</label>
+              <input type="number" [(ngModel)]="newCode.maxUsages" name="maxUsages" 
+                     class="form-control" min="1">
+            </div>
+
+            <button type="submit" class="btn btn-success w-100" [disabled]="isLoading">
+              {{ isLoading ? 'Generowanie...' : '✨ Stwórz Kod' }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-8">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          <h5 class="mb-0">Aktywne Kody</h5>
+        </div>
+        <div class="card-body p-0">
+          <table class="table table-striped mb-0 align-middle">
+            <thead>
+              <tr>
+                <th>Kod</th>
+                <th>Zniżka</th>
+                <th>Zużyto</th>
+                <th>Status</th>
+                <th>Akcje</th> </tr>
+            </thead>
+            <tbody>
+              @for (code of codes; track code.id) {
+                <tr [class.opacity-50]="!code.active">
+                  <td class="fw-bold">{{ code.code }}</td>
+                  <td><span class="badge bg-info">{{ code.percent }}%</span></td>
+                  <td>{{ code.usedCount }} / {{ code.maxUsages }}</td>
+                  
+                  <td>
+                    @if (!code.active) {
+                      <span class="badge bg-secondary">Wyłączony</span>
+                    } @else if (code.usedCount >= code.maxUsages) {
+                      <span class="badge bg-warning text-dark">Wyczerpany</span>
+                    } @else {
+                      <span class="badge bg-success">Aktywny</span>
+                    }
+                  </td>
+
+                  <td>
+                    <button class="btn btn-sm me-2" 
+                            [class.btn-warning]="code.active" 
+                            [class.btn-success]="!code.active"
+                            (click)="toggleStatus(code)">
+                      {{ code.active ? '🚫' : '✅' }}
+                    </button>
+                    
+                    <button class="btn btn-sm btn-danger" (click)="deleteCode(code)">
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="text-center py-4">Brak kodów w bazie</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
