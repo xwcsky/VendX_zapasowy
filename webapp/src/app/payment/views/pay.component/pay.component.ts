@@ -63,8 +63,6 @@ export class PayComponent implements OnInit, OnDestroy {
         next: (order: any) => {
             this.orderId = order.id;
             
-            // 👇 ODBIERAMY CENĘ Z BAZY DANYCH
-            // Backend policzył rabat i zwraca gotową kwotę w 'order.amount'
             this.finalPrice = Number(order.amount).toFixed(2); 
 
             console.log('✅ Zamówienie:', this.orderId, 'Cena końcowa:', this.finalPrice);
