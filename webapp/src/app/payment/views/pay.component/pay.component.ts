@@ -24,10 +24,13 @@ export class PayComponent implements OnInit, OnDestroy {
   scentId: string = '';
   deviceId: string = '';
   orderId: string = ''; // Tu zapiszemy ID zamówienia z bazy
-  quantity: number = 1;
+  quantity: number = 0;
+  discountCode: string | undefined;
+
+  finalPrice: string = '';
+
   private socketSub: Subscription | undefined;
 
-  discountCode: string | undefined;
 
   constructor(
     private route: ActivatedRoute,
@@ -55,34 +58,33 @@ export class PayComponent implements OnInit, OnDestroy {
 
   // Główna logika: Tworzy zamówienie -> Łączy WebSocket -> Czeka na sukces
   createAndListen(scentId: string, deviceId: string, quantity: number, discountCode?: string) {
-      // 1. Strzał do API Backend
-      this.ordersApi.createOrder({ scentId, deviceId, quantity, discountCode }).subscribe({
-          next: (order: any) => {
-              this.orderId = order.id;
-              console.log('✅ Zamówienie utworzone w bazie. ID:', this.orderId);
+    // 👇 Wysyłamy discountCode do backendu
+    this.ordersApi.createOrder({ scentId, deviceId, quantity, discountCode }).subscribe({
+        next: (order: any) => {
+            this.orderId = order.id;
+            
+            // 👇 ODBIERAMY CENĘ Z BAZY DANYCH
+            // Backend policzył rabat i zwraca gotową kwotę w 'order.amount'
+            this.finalPrice = Number(order.amount).toFixed(2); 
 
-              // 2. Łączymy się z pokojem WebSocket dla tego zamówienia
-              this.socketService.joinOrderRoom(this.orderId);
+            console.log('✅ Zamówienie:', this.orderId, 'Cena końcowa:', this.finalPrice);
 
-              // 3. Nasłuchujemy zmian statusu
-              this.socketSub = this.socketService.onOrderStatus().subscribe((data) => {
-                  console.log('⚡ WebSocket odebrał status:', data.status);
-                  
-                  if (order.status === 'PAID') {
-                    console.log('🎉 Zamówienie darmowe! Przekierowanie...');
+            // Jeśli 100% zniżki (cena 0), backend od razu ustawił PAID
+            if (order.status === 'PAID') {
+               this.router.navigate(['/payment/confirm'], { queryParams: { orderId: this.orderId } });
+               return;
+            }
+
+            this.socketService.joinOrderRoom(this.orderId);
+            this.socketSub = this.socketService.onOrderStatus().subscribe((data) => {
+                if (data.status === 'PAID') {
                     this.router.navigate(['/payment/confirm'], { queryParams: { orderId: this.orderId } });
-                    return; // Kończymy, nie trzeba WebSocketu
-                 }
-
-                 if (data.status === 'PAID') {
-                  this.router.navigate(['/payment/confirm'], { queryParams: { orderId: this.orderId } });
                 }
-
-              });
-          },
-          error: (err) => console.error('❌ Błąd tworzenia zamówienia:', err)
-      });
-  }
+            });
+        },
+        error: (err) => console.error('❌ Błąd tworzenia zamówienia:', err)
+    });
+}
 
   ngOnDestroy(): void {
       // Bardzo ważne: rozłączamy się po wyjściu z ekranu, żeby nie dublować nasłuchiwania

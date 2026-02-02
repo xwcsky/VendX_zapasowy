@@ -16,6 +16,7 @@ export class GooglePayButtonComponent implements OnInit {
   @Input() scentId!: string;
   @Input() deviceId!: string;
   @Input() quantity: number = 1;
+  @Input() fixedPrice!: string;
   ready = false;
   paymentRequest!: google.payments.api.PaymentDataRequest;
 
@@ -27,6 +28,11 @@ export class GooglePayButtonComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+
+    if (!this.fixedPrice) {
+      console.error('Brak ceny dla Google Pay!');
+      return;
+  }
     // 🔒 Twój publiczny klucz RSA (DIRECT z Tpay Sandbox)
     const publicKeyPem = `-----BEGIN PUBLIC KEY-----
 MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDNEPTcj9QdrGOEYV3uJBh+0Vku
@@ -46,7 +52,7 @@ u85zpT6otlgSNXgBzQIDAQAB
           if (isReady) {
             this.paymentRequest = this.googlePayService.createPaymentRequest(
               publicKeyPem,
-              totalPriceStr,
+              this.fixedPrice,
               'PLN'
             );
             this.ready = true;
