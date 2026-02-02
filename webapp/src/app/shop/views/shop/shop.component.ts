@@ -1,4 +1,4 @@
-import { Component } from '@angular/core'; import { ColognesListComponent } from '../../components/colognes-list/colognes-list.component';
+import { Component, ChangeDetectorRef } from '@angular/core'; import { ColognesListComponent } from '../../components/colognes-list/colognes-list.component';
 import { AuthService } from '../../../auth/auth.service'; import { QRCodeComponent } from 'angularx-qrcode';
 import { ConfigurationService } from '../../../common/services/configuration.service';
 import { BreadcrumbsComponent } from '../../../breadcrumbs/breadcrumbs'; 
@@ -20,7 +20,8 @@ import { OrdersApiService } from '../../services/orders-api.service';
          constructor(
           public authService: AuthService,
           private apiService: ColognesApiService, 
-          private ordersApiService: OrdersApiService
+          private ordersApiService: OrdersApiService,
+          private cdr: ChangeDetectorRef
         )
           { } logout(): void { this.authService.logout(); } 
 
@@ -73,12 +74,16 @@ import { OrdersApiService } from '../../services/orders-api.service';
                   if (this.discountPercent === 100) {
                      this.quantity = 1; // Reset ilości lub zostaw jak chcesz
                      this.generateQr(); // Przeładuj logikę
-                  }
+                  } else if (this.discountPercent > 0) {
+                    this.generateQr();
+                 }
+                 this.cdr.detectChanges();
                 },
                 error: (err: any) => {
                   console.error('Błąd kodu:', err);
                   this.discountPercent = 0;
                   alert('Kod nieprawidłowy lub wyczerpany!');
+                  this.cdr.detectChanges();
                 }
               });
             }

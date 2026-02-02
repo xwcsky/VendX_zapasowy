@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { OSType } from '../../../common/model/enums';
 import { ApplePayButtonComponent } from '../../components/apple-pay-button/apple-pay-button.component';
@@ -36,7 +36,8 @@ export class PayComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,               // Do przekierowania na ekran sukcesu
     private socketService: SocketService, // Nasz WebSocket
-    private ordersApi: OrdersApiService   // Do komunikacji z API (tworzenie zamówienia)
+    private ordersApi: OrdersApiService,   // Do komunikacji z API (tworzenie zamówienia)
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -58,14 +59,27 @@ export class PayComponent implements OnInit, OnDestroy {
 
   // Główna logika: Tworzy zamówienie -> Łączy WebSocket -> Czeka na sukces
   createAndListen(scentId: string, deviceId: string, quantity: number, discountCode?: string) {
-    // 👇 Wysyłamy discountCode do backendu
+    const payload = {
+      scentId: scentId,
+      deviceId: deviceId,
+      quantity: Number(quantity), 
+      discountCode: discountCode || undefined // 👈 Jeśli pusty string, wyślij undefined (żeby DTO nie krzyczało)
+    };
+
+    console.log('Wysyłam do backendu:', payload); // Zobacz w konsoli co leci
+
     this.ordersApi.createOrder({ scentId, deviceId, quantity, discountCode }).subscribe({
         next: (order: any) => {
             this.orderId = order.id;
             
-            this.finalPrice = Number(order.amount).toFixed(2); 
+            if (order.amount !== undefined && order.amount !== null) {
+              this.finalPrice = Number(order.amount).toFixed(2);
+          } else {
+              this.finalPrice = '0.00'; // Fallback
+          }
 
             console.log('✅ Zamówienie:', this.orderId, 'Cena końcowa:', this.finalPrice);
+            this.cdr.detectChanges();
 
             // Jeśli 100% zniżki (cena 0), backend od razu ustawił PAID
             if (order.status === 'PAID') {
@@ -80,7 +94,14 @@ export class PayComponent implements OnInit, OnDestroy {
                 }
             });
         },
-        error: (err) => console.error('❌ Błąd tworzenia zamówienia:', err)
+        error: (err) => {
+          console.error('❌ Błąd tworzenia zamówienia:', err);
+          // Tutaj zobaczysz szczegóły błędu 400, jeśli nadal wystąpi
+          if (err.error && err.error.message) {
+              console.error('Szczegóły walidacji:', err.error.message);
+          }
+      }
+        
     });
 }
 
