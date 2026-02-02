@@ -2,19 +2,21 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { EventsGateway } from 'src/events/events.gateway';
+import { DiscountsService } from 'src/discounts/discounts.service';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private prisma: PrismaService,
-    private eventsGateway: EventsGateway, // <-- Wstrzykujemy Gateway
+    private eventsGateway: EventsGateway, 
+    private discountsService: DiscountsService,
   ) {}
 
   // Pobiera wszystkie zamówienia
   async findAll() {
     const rows = await this.prisma.orders.findMany({
       orderBy: { creation_date: 'desc' },
-      include: { cologne: true }, // Dołączamy dane o perfumach
+      include: { cologne: true }, 
     });
 
     return rows.map((row) => ({
@@ -25,34 +27,64 @@ export class OrdersService {
       quantity: row.quantity,
       amount: row.amount,
       creationDate: row.creation_date,
-      cologneName: row.cologne?.cologne_name, // Opcjonalnie do wyświetlania
+      cologneName: row.cologne?.cologne_name, 
     }));
   }
 
   // Tworzenie zamówienia (Status: PENDING)
-  async create(dto: CreateOrderDto) {
+  async create(dto: CreateOrderDto & { discountCode?: string }) {
     console.log('Tworzę zamówienie:', dto);
 
-    const quantity = dto.quantity || 1;
-    const unitPrice = 5.00; // Cena za sztukę
-    const totalAmount = unitPrice * quantity; // np. 5.00 * 3 = 15.00
+    let quantity = dto.quantity || 1;
+    let unitPrice = 5.00; 
+    let finalAmount = unitPrice * quantity; 
+
+    // --- LOGIKA RABATU ---
+    if (dto.discountCode) {
+      try {
+        const validCode = await this.discountsService.validateCode(dto.discountCode);
+        const discountVal = (finalAmount * validCode.percent) / 100;
+        finalAmount = finalAmount - discountVal;
+        
+        if (finalAmount < 0) finalAmount = 0;
+        
+        console.log(`Zastosowano kod: ${dto.discountCode} (-${validCode.percent}%). Nowa cena: ${finalAmount}`);
+        
+        // Zużyj kod jeśli 100% zniżki
+        if (finalAmount === 0) {
+             await this.discountsService.consumeCode(dto.discountCode);
+        }
+      } catch (e) {
+        console.error('Błąd rabatu (ignoruję):', e.message);
+      }
+    }
 
     // 1. Zapis do bazy
     const order = await this.prisma.orders.create({
       data: {
         scent_id: dto.scentId,
         device_id: dto.deviceId,
-        quantity: dto.quantity || 1, // Domyślnie 1 psik
-        status: 'PENDING',
-        amount: totalAmount, // Tu docelowo możesz pobierać cenę z bazy perfum * quantity
+        quantity: dto.quantity || 1, 
+        status: finalAmount === 0 ? 'PAID' : 'PENDING', // Jak za darmo, to od razu PAID
+        amount: finalAmount, 
       },
     });
 
     console.log(`Zamówienie ${order.id} utworzone. Czekam na płatność...`);
 
+    if (finalAmount === 0) {
+      console.log('Zamówienie darmowe (Admin/VIP). Uruchamiam maszynę!');
+      this.eventsGateway.sendToDevice(order.device_id, 'START_PUMP', {
+         scentId: order.scent_id,
+         quantity: order.quantity,
+      });
+      // Nie czekamy na Google Pay, bo cena to 0
+   }
+
     return {
       id: order.id,
       status: order.status,
+      amount: finalAmount,
       // Zwracamy to, co potrzebne frontendowi do płatności
     };
   }

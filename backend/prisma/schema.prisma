@@ -49,6 +49,16 @@ model Devices {
   @@map("devices")
 }
 
+model DiscountCode {
+  id          String   @id @default(uuid())
+  code        String   @unique              
+  percent     Int      
+  maxUsages   Int      @default(1)          
+  usedCount   Int      @default(0)         
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
 enum Role {
   ADMIN
   CLIENT
