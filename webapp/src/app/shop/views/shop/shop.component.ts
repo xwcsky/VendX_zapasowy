@@ -54,8 +54,16 @@ import { Router } from '@angular/router';
         
             // Po 5 sekundach (czas na "psiknięcie") wracamy do wygaszacza
             setTimeout(() => {
-              this.router.navigate(['/screensaver']);
-            }, 5000);
+              this.dispensing = false;   // Ukryj "Dziękujemy"
+              this.payConfirmed = false; // Wróć do listy perfum (schowaj płatność)
+              this.cologneId = '';       // Odznacz wybraną perfumę
+              this.quantity = 1;         // Reset ilości
+              this.discountCode = '';    // Wyczyść wpisany kod
+              this.discountPercent = 0;  // Reset zniżki
+              this.qrData = '';          // Wyczyść dane QR
+              
+              // 👇 Wymuś odświeżenie widoku, żeby Angular "zauważył" reset
+              this.cdr.detectChanges();            }, 5000);
           }
 
           setCologneId(cologneId: string | undefined): void { this.cologneId = cologneId; } 

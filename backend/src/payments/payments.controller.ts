@@ -1,14 +1,46 @@
 import { Controller, Post, Body, HttpCode, BadRequestException, NotFoundException } from '@nestjs/common';
 import { OrdersService } from '../orders/orders.service';
+import { P24Service } from './p24.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly ordersService: OrdersService,
+    private readonly p24Service: P24Service
+  ) {}
 
-  /**
-   * 1. OBSŁUGA GOOGLE PAY (Z FRONTENDU)
-   * To jest endpoint, na który strzela Twoja aplikacja po kliknięciu "Zapłać".
-   */
+  @Post('p24/start')
+  async startP24Payment(@Body() body: { orderId: string }) {
+    console.log('[P24] Start płatności dla:', body.orderId);
+    
+    // Pobierz dane zamówienia
+    const allOrders = await this.ordersService.findAll();
+    const order = allOrders.find(o => o.id === body.orderId);
+
+    if (!order) throw new NotFoundException('Nie znaleziono zamówienia');
+
+    // Wygeneruj link w P24
+    const redirectUrl = await this.p24Service.registerTransaction(order);
+
+    return { redirectUrl };
+  }
+
+  @Post('p24/notify')
+  @HttpCode(200) // P24 oczekuje statusu 200 OK
+  async handleP24Notification(@Body() body: any) {
+    console.log('[P24 Webhook] Otrzymano powiadomienie:', body);
+
+    const isVerified = await this.p24Service.verifyTransaction(body);
+
+    if (isVerified) {
+       console.log(`[P24] Płatność potwierdzona dla: ${body.sessionId}`);
+       // sessionId to u nas orderId
+       await this.ordersService.confirmPayment(body.sessionId, `P24-${body.orderId}`, body.amount / 100);
+    }
+
+    return 'OK';
+  }
+  
   @Post()
   async handleGooglePay(@Body() body: any) {
     console.log('[GooglePay] Otrzymano token:', body);

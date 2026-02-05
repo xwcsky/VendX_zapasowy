@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { ConfigurationService } from './configuration.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,7 @@ export class SocketService {
   constructor() {
     // Łączymy się z backendem (adres z environment lub na sztywno localhost:8080)
     // Jeśli w environment.ts masz apiUrl, użyj go. Jeśli nie, wpisz adres ręcznie.
-    const url = 'http://127.0.0.1:8080'; 
+    const url = ConfigurationService.getApiUrl() || 'http://localhost:8080';
     this.socket = io(url);
   }
 
@@ -40,15 +41,18 @@ export class SocketService {
   }
 
   joinDeviceRoom(deviceId: string) {
-    this.socket.emit('joinDevice', deviceId);
-    console.log(`📡 Dołączono do pokoju urządzenia: ${deviceId}`);
+    this.socket.emit('joinDeviceRoom', { deviceId });
+    console.log(`📡 Kiosk dołączył do pokoju urządzenia: ${deviceId}`);
   }
 
   onPumpCommand(): Observable<any> {
     return new Observable((observer) => {
-      this.socket.on('START_PUMP', (data: any) => {
-        console.log('⚡ Otrzymano komendę START_PUMP:', data);
-        observer.next(data);
+      this.socket.on('deviceCommand', (data: any) => {
+        console.log('⚡ Otrzymano komendę z serwera:', data);
+        
+        if (data.command === 'START_PUMP') {
+           observer.next(data);
+        }
       });
     });
   }
