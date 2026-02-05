@@ -53,7 +53,7 @@ export class P24Service {
         }),
       );
 
-      const token = response.data.data.token;
+      const token = (response as any).data.data.token;
       // Zwracamy gotowy link do płatności
       return `https://sandbox.przelewy24.pl/trnRequest/${token}`;
     } catch (error) {
