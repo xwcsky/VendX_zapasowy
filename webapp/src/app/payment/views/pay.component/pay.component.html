@@ -32,7 +32,14 @@
         [scentId]="scentId" 
         [deviceId]="deviceId"
         [quantity]="quantity"
-        [fixedPrice]="finalPrice"> </app-google-pay-button>
+        [fixedPrice]="finalPrice">
+       </app-google-pay-button>
+
+       <button class="btn btn-warning w-100 py-3 mt-3 shadow fw-bold d-flex align-items-center justify-content-center"
+        (click)="payWithP24()">
+       <span class="fs-4 me-2">Zapłać szybkim przelewem / BLIK</span>
+       <img src="https://pro.przelewy24.pl/img/logo_small_mobile.png" alt="P24" height="30">
+       </button>
    }
 
 } @else {

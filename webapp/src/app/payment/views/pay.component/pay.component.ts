@@ -3,10 +3,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { OSType } from '../../../common/model/enums';
 import { ApplePayButtonComponent } from '../../components/apple-pay-button/apple-pay-button.component';
 import { GooglePayButtonComponent } from '../../components/google-pay-button/google-pay-button.component';
-// Importujemy serwisy (upewnij się, że ścieżki są poprawne w Twoim projekcie)
 import { SocketService } from '../../../common/services/socket.service';
 import { OrdersApiService } from '../../../shop/services/orders-api.service';
 import { Subscription } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { ConfigurationService } from '../../../common/services/configuration.service';
 
 @Component({
   selector: 'app-pay',
@@ -37,7 +38,8 @@ export class PayComponent implements OnInit, OnDestroy {
     private router: Router,               // Do przekierowania na ekran sukcesu
     private socketService: SocketService, // Nasz WebSocket
     private ordersApi: OrdersApiService,   // Do komunikacji z API (tworzenie zamówienia)
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -55,6 +57,26 @@ export class PayComponent implements OnInit, OnDestroy {
             this.createAndListen(this.scentId, this.deviceId, this.quantity, this.discountCode);
         }
     });
+  }
+
+  payWithP24() {
+    if (!this.orderId) {
+      alert('Błąd: Brak numeru zamówienia');
+      return;
+    }
+    
+    const apiUrl = ConfigurationService.getApiUrl(); 
+  
+    this.http.post<any>(`${apiUrl}/payments/p24/start`, { orderId: this.orderId })
+      .subscribe({
+        next: (res) => {
+          if (res.redirectUrl) {
+             console.log('Przekierowanie do P24:', res.redirectUrl);
+             window.location.href = res.redirectUrl;
+          }
+        },
+        error: (err) => console.error('Błąd startu P24:', err)
+      });
   }
 
   // Główna logika: Tworzy zamówienie -> Łączy WebSocket -> Czeka na sukces
