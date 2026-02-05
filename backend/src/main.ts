@@ -27,19 +27,19 @@ async function bootstrap() {
 
     // 🔹 CORS
     app.enableCors({
-        origin: [
-            'https://vendx.pl',
-            'http://vendx.pl',
-            'http://192.168.1.17:4200',
-            'http://192.168.8.100:4200',
-            'http://localhost:4200'
-        ],
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+        origin:  true,
+            // 'https://vendx.pl',
+            // 'http://vendx.pl',
+            // 'http://192.168.1.17:4200',
+            // 'http://192.168.8.100:4200',
+            // 'http://localhost:4200'
+
+        methods: ['GET','HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         exposedHeaders: ['Authorization'],
         credentials: true,
     });
 
-    await app.listen(process.env.PORT || 8080, '0.0.0.0');
+    await app.listen(8080, '0.0.0.0');
 }
 bootstrap();
