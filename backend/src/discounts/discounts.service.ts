@@ -5,7 +5,28 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class DiscountsService {
   constructor(private prisma: PrismaService) {}
 
-  // Sprawdzanie kodu (używane przez Frontend)
+  findAll() {
+    return this.prisma.discountCode.findMany({
+      orderBy: { createdAt: 'desc' } // Najnowsze na górze
+    });
+  }
+
+  async toggleStatus(id: string) {
+    const code = await this.prisma.discountCode.findUnique({ where: { id } });
+    if (!code) throw new NotFoundException('Kod nie istnieje');
+
+    return this.prisma.discountCode.update({
+      where: { id },
+      data: { active: !code.active } // Odwracamy wartość (true -> false)
+    });
+  }
+
+  async remove(id: string) {
+    return this.prisma.discountCode.delete({
+      where: { id }
+    });
+  }
+
   async validateCode(code: string) {
     const discount = await this.prisma.discountCode.findUnique({
       where: { code: code },
