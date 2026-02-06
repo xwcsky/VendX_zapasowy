@@ -8,11 +8,14 @@ import { OrdersApiService } from '../../../shop/services/orders-api.service';
 import { Subscription } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { ConfigurationService } from '../../../common/services/configuration.service';
+import { environment } from '../../../../environments/environment';
+import { CommonModule } from '@angular/common'; // Ważne dla *ngIf w HTML
 
 @Component({
   selector: 'app-pay',
-  standalone: true, // Zakładam, że używasz standalone components
+  standalone: true,
   imports: [
+    CommonModule,
     ApplePayButtonComponent,
     GooglePayButtonComponent
   ],
@@ -24,20 +27,20 @@ export class PayComponent implements OnInit, OnDestroy {
   
   scentId: string = '';
   deviceId: string = '';
-  orderId: string = ''; // Tu zapiszemy ID zamówienia z bazy
+  orderId: string = ''; // ID zamówienia z bazy
   quantity: number = 0;
   discountCode: string | undefined;
 
-  finalPrice: string = '';
+  finalPrice: string = '0.00'; // Trzymamy jako string do wyświetlania w HTML
+  isLoading: boolean = false;
 
   private socketSub: Subscription | undefined;
 
-
   constructor(
     private route: ActivatedRoute,
-    private router: Router,               // Do przekierowania na ekran sukcesu
-    private socketService: SocketService, // Nasz WebSocket
-    private ordersApi: OrdersApiService,   // Do komunikacji z API (tworzenie zamówienia)
+    private router: Router,
+    private socketService: SocketService,
+    private ordersApi: OrdersApiService,
     private cdr: ChangeDetectorRef,
     private http: HttpClient
   ) {}
@@ -51,64 +54,39 @@ export class PayComponent implements OnInit, OnDestroy {
         this.quantity = params['quantity'] ? Number(params['quantity']) : 1; 
         this.discountCode = params['discountCode'];
 
-        console.log('Parametry płatności:', { scentId: this.scentId, deviceId: this.deviceId, quantity: this.quantity, discountCode: this.discountCode });
-
         if (this.scentId && this.deviceId) {
-            this.createAndListen(this.scentId, this.deviceId, this.quantity, this.discountCode);
+            // Tworzymy zamówienie od razu, żeby znać cenę i mieć ID dla P24
+            this.createOrderAndListen(this.scentId, this.deviceId, this.quantity, this.discountCode);
         }
     });
   }
 
-  payWithP24() {
-    if (!this.orderId) {
-      alert('Błąd: Brak numeru zamówienia');
-      return;
-    }
-    
-    const apiUrl = ConfigurationService.getApiUrl(); 
-  
-    this.http.post<any>(`${apiUrl}/payments/p24/start`, { orderId: this.orderId })
-      .subscribe({
-        next: (res) => {
-          if (res.redirectUrl) {
-             console.log('Przekierowanie do P24:', res.redirectUrl);
-             window.location.href = res.redirectUrl;
-          }
-        },
-        error: (err) => console.error('Błąd startu P24:', err)
-      });
-  }
-
-  // Główna logika: Tworzy zamówienie -> Łączy WebSocket -> Czeka na sukces
-  createAndListen(scentId: string, deviceId: string, quantity: number, discountCode?: string) {
-    const payload = {
-      scentId: scentId,
-      deviceId: deviceId,
-      quantity: Number(quantity), 
-      discountCode: discountCode || undefined // 👈 Jeśli pusty string, wyślij undefined (żeby DTO nie krzyczało)
-    };
-
-    console.log('Wysyłam do backendu:', payload); // Zobacz w konsoli co leci
+  // 1. Tworzenie zamówienia przy wejściu na stronę
+  createOrderAndListen(scentId: string, deviceId: string, quantity: number, discountCode?: string) {
+    this.isLoading = true;
 
     this.ordersApi.createOrder({ scentId, deviceId, quantity, discountCode }).subscribe({
         next: (order: any) => {
             this.orderId = order.id;
             
+            // Obsługa ceny
             if (order.amount !== undefined && order.amount !== null) {
               this.finalPrice = Number(order.amount).toFixed(2);
-          } else {
-              this.finalPrice = '0.00'; // Fallback
-          }
+            } else {
+              this.finalPrice = '0.00';
+            }
 
-            console.log('✅ Zamówienie:', this.orderId, 'Cena końcowa:', this.finalPrice);
+            console.log('✅ Zamówienie:', this.orderId, 'Cena:', this.finalPrice);
+            this.isLoading = false;
             this.cdr.detectChanges();
 
-            // Jeśli 100% zniżki (cena 0), backend od razu ustawił PAID
+            // Jeśli cena = 0 (kod 100%), od razu sukces
             if (order.status === 'PAID') {
                this.router.navigate(['/payment/confirm'], { queryParams: { orderId: this.orderId } });
                return;
             }
 
+            // Nasłuchujemy na zmiany statusu (jak klient wróci z P24)
             this.socketService.joinOrderRoom(this.orderId);
             this.socketSub = this.socketService.onOrderStatus().subscribe((data) => {
                 if (data.status === 'PAID') {
@@ -118,17 +96,56 @@ export class PayComponent implements OnInit, OnDestroy {
         },
         error: (err) => {
           console.error('❌ Błąd tworzenia zamówienia:', err);
-          // Tutaj zobaczysz szczegóły błędu 400, jeśli nadal wystąpi
-          if (err.error && err.error.message) {
-              console.error('Szczegóły walidacji:', err.error.message);
-          }
-      }
-        
+          this.isLoading = false;
+        }
     });
-}
+  }
+
+  // 2. Inicjacja płatności P24 (podpięta pod wszystkie przyciski)
+  async initiateP24Payment(method: 'blik' | 'gpay' | 'apple') {
+    if (!this.orderId) {
+      console.error('Brak ID zamówienia! Czekam na API...');
+      return;
+    }
+
+    this.isLoading = true;
+    console.log(`Rozpoczynam płatność P24 (${method}) dla zamówienia:`, this.orderId);
+
+    try {
+      // Obliczamy kwotę w groszach z stringa
+      const amountInGrosze = Math.round(Number(this.finalPrice) * 100);
+
+      // Rejestrujemy w P24
+      const p24Response = await this.http.post<any>(`${environment.apiUrl}/payments/init`, {
+        orderId: this.orderId,
+        email: 'klient@vendx.pl',
+        amount: amountInGrosze
+      }).toPromise();
+
+      console.log('Odpowiedź P24:', p24Response);
+
+      // Przekierowanie
+      if (p24Response && p24Response.token) {
+        window.location.href = `https://sandbox.przelewy24.pl/trnRequest/${p24Response.token}`;
+      } else {
+        throw new Error('Brak tokenu P24');
+      }
+
+    } catch (error) {
+      console.error('Błąd płatności:', error);
+      this.isLoading = false;
+      this.router.navigate(['/error']); // Możesz też pokazać alert zamiast wychodzić
+    }
+  }
+
+  // Wrappery dla przycisków w HTML
+  onGooglePay() { this.initiateP24Payment('gpay'); }
+  onApplePay()  { this.initiateP24Payment('apple'); }
+  
+  // Jeśli masz osobny przycisk "Zapłać BLIK" w HTML
+  payWithP24()  { this.initiateP24Payment('blik'); }
 
   ngOnDestroy(): void {
-      // Bardzo ważne: rozłączamy się po wyjściu z ekranu, żeby nie dublować nasłuchiwania
       if (this.socketSub) this.socketSub.unsubscribe();
       this.socketService.disconnect();
   }

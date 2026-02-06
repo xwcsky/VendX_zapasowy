@@ -3,6 +3,8 @@ import axios from 'axios';
 import * as qs from 'qs';
 import * as crypto from 'crypto';
 import { OrdersService } from '../orders/orders.service';
+import { EventsGateway } from 'src/events/events.gateway';
+import { PrismaService } from 'prisma/prisma.service';
 
 @Injectable()
 export class PaymentsService {
@@ -19,7 +21,27 @@ export class PaymentsService {
      * googleToken: string (may be JSON-stringified)
      * amount: string (e.g. "1.00")
      */
-    constructor(private readonly ordersService: OrdersService) {}
+    constructor(
+        private readonly ordersService: OrdersService,
+        private prisma: PrismaService,
+    private eventsGateway: EventsGateway
+    ) {}
+
+    async markAsPaid(orderId: string) {
+        this.logger.log(`Oznaczanie zamówienia ${orderId} jako OPŁACONE`);
+    
+        // 1. Aktualizacja w bazie
+        const updatedOrder = await this.prisma.orders.update({
+          where: { id: orderId },
+          data: { 
+            status: 'PAID',
+            transaction_id: 'P24_' + new Date().getTime() // Generujemy ID transakcji lub bierzemy z P24
+          }
+        });
+        this.eventsGateway.notifyOrderUpdate(orderId, 'PAID');
+
+    return updatedOrder;
+  }
 
     async createGooglePayTransaction(googleToken: string, amount: string, scentId: string, deviceId: string, currency = 'PLN') {
         try {
