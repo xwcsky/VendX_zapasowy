@@ -65,27 +65,27 @@ export class PaymentsController {
   
   @Post()
   async handleGooglePay(@Body() body: any) {
-    console.log('[GooglePay] Otrzymano token:', body);
+    console.log('[GooglePay] Otrzymano płatność:', body);
 
+    // 1. Znajdź zamówienie
+    // (W idealnym świecie frontend powinien wysyłać orderId, 
+    // ale tutaj szukamy ostatniego zamówienia dla tego urządzenia)
     const allOrders = await this.ordersService.findAll();
-    
-    // Szukamy ostatniego zamówienia PENDING dla tego urządzenia
     const pendingOrder = allOrders.find(o => 
       o.deviceId === body.deviceId && 
       o.status === 'PENDING'
     );
 
     if (!pendingOrder) {
-      console.error('Nie znaleziono oczekującego zamówienia dla urządzenia:', body.deviceId);
-      throw new NotFoundException('Brak oczekującego zamówienia do opłacenia');
+      console.error('❌ Nie znaleziono zamówienia dla urządzenia:', body.deviceId);
+      throw new NotFoundException('Brak oczekującego zamówienia');
     }
 
-    console.log(`[GooglePay] Zatwierdzam zamówienie: ${pendingOrder.id}`);
-    
-    // Potwierdzamy płatność
-    return this.ordersService.confirmPayment(pendingOrder.id, 'GOOGLE_PAY_DEMO_TOKEN', body.amount);
-  }
+    console.log(`✅ Zatwierdzam zamówienie: ${pendingOrder.id} kwota: ${body.amount}`);
 
+    // 2. Oznaczamy jako opłacone (używając naszej czystej metody)
+    return this.paymentsService.markAsPaid(pendingOrder.id, 'GPAY_DEMO_TOKEN');
+  }
   /**
    * 2. SYMULACJA PŁATNOŚCI (Ręczna)
    */

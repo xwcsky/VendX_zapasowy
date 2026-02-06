@@ -63,8 +63,8 @@
                   "with": "src/environments/environment.prod.ts"
                 }
               ],
-              "baseHref": "/scentify-test/",
-              "deployUrl": "/scentify-test/",
+              "baseHref": "/scentify/",
+              "deployUrl": "/scentify/",
               "optimization": true,
               "extractLicenses": true,
               "sourceMap": false

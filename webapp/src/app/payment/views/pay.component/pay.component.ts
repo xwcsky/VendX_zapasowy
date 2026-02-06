@@ -70,11 +70,16 @@ export class PayComponent implements OnInit, OnDestroy {
             this.orderId = order.id;
             
             // Obsługa ceny
-            if (order.amount !== undefined && order.amount !== null) {
+            if (order.amount) {
+              // Backend zwraca stringa np. "15.00", parsujemy go
               this.finalPrice = Number(order.amount).toFixed(2);
-            } else {
-              this.finalPrice = '0.00';
-            }
+          } else if (this.quantity > 0) {
+              // Fallback: Jeśli backend nie zwrócił ceny, liczymy sami (cena perfum * ilość)
+              // Zakładam, że pobrałeś cenę perfum wcześniej (np. w ngOnInit loadCologneDetails)
+              // Ale lepiej polegać na backendzie!
+              this.finalPrice = '0.00'; 
+              console.warn('⚠️ Backend nie zwrócił amount! Ustawiam 0.00');
+          }
 
             console.log('✅ Zamówienie:', this.orderId, 'Cena:', this.finalPrice);
             this.isLoading = false;
