@@ -20,6 +20,9 @@
         [deviceId]="deviceId"
         [quantity]="quantity"
         [fixedPrice]="finalPrice"> </app-google-pay-button>
+        <button class="btn-p24" (click)="initiateP24Payment('blik')">
+          Zapłać przez Przelewy24 / BLIK
+        </button>
 
     } @else {
       <app-apple-pay-button
