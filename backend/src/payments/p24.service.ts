@@ -26,6 +26,9 @@ export class P24Service {
     const signString = `{"sessionId":"${sessionId}","merchantId":${this.merchantId},"amount":${amount},"currency":"PLN","crc":"${this.crc}"}`;
     const sign = crypto.createHash('sha384').update(signString).digest('hex');
 
+    const returnUrl = 'https://vendx.pl/confirm'; // Gdzie wraca klient
+    const statusUrl = `${process.env.APP_URL || 'https://seal-app-u9fd7.ondigitalocean.app'}/payments/p24/notification`;
+
     const payload = {
       merchantId: this.merchantId,
       posId: this.posId,
@@ -37,9 +40,9 @@ export class P24Service {
       country: 'PL',
       language: 'pl',
       // 👇 Ważne: Gdzie wysłać klienta po płatności?
-      urlReturn: `${process.env.FRONTEND_URL}/confirm`, 
+      urlReturn: returnUrl, 
       // 👇 Ważne: Gdzie P24 ma wysłać tajne potwierdzenie do bazy?
-      urlStatus: `${process.env.APP_URL}/payments/p24/notification`,
+      urlStatus: statusUrl,
       sign: sign,
     };
 
