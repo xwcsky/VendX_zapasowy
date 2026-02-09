@@ -1,41 +1,91 @@
-import { Controller, Post, Body, HttpCode, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, BadRequestException, NotFoundException, Logger} from '@nestjs/common';
+import { PaymentsService } from './payments.service';
 import { OrdersService } from '../orders/orders.service';
+import { P24Service } from './p24.service';
 
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly ordersService: OrdersService) {}
+  private logger = new Logger('PaymentsController');
+  constructor(
+    private readonly paymentsService: PaymentsService,
+    private readonly ordersService: OrdersService,
+    private readonly p24Service: P24Service
+  ) {}
 
-  /**
-   * 1. OBSŁUGA GOOGLE PAY (Z FRONTENDU)
-   * To jest endpoint, na który strzela Twoja aplikacja po kliknięciu "Zapłać".
-   */
+  @Post('p24/start')
+  async startP24Payment(@Body() body: { orderId: string }) {
+    console.log('[P24] Start płatności dla:', body.orderId);
+    
+    // Pobierz dane zamówienia
+    const allOrders = await this.ordersService.findAll();
+    const order = allOrders.find(o => o.id === body.orderId);
+
+    if (!order) throw new NotFoundException('Nie znaleziono zamówienia');
+
+    // PRZYGOTOWANIE DANYCH DLA P24
+    // 1. Kwota w groszach (P24 nie obsługuje przecinków)
+    const amountInGrosze = Math.round(Number(order.amount) * 100);
+    
+    // 2. Email (jeśli kiosk nie ma usera, dajemy techniczny)
+    const email = 'klient@vendx.pl'; 
+
+    // 3. Wywołanie serwisu z 3 argumentami (Tak jak wymaga p24.service.ts)
+    const token = await this.p24Service.registerTransaction(
+      amountInGrosze, 
+      order.id, 
+      email
+    );
+
+    // 4. Zwracamy gotowy link do przekierowania
+    return { 
+      redirectUrl: `https://sandbox.przelewy24.pl/trnRequest/${token}` 
+    };
+  }
+
+  @Post('p24/notification')
+  @HttpCode(200) // P24 wymaga odpowiedzi 200 OK
+  async handleNotification(@Body() body: any) {
+    this.logger.log('Otrzymano powiadomienie z P24:', body);
+
+    try {
+      // 1. Weryfikujemy czy to P24, a nie haker
+      await this.p24Service.verifyTransaction(body);
+
+      // 2. Jeśli weryfikacja przeszła -> Aktualizujemy bazę
+      // body.sessionId to ID zamówienia z naszej bazy (zazwyczaj)
+      await this.paymentsService.markAsPaid(body.sessionId);
+      
+      return 'OK';
+    } catch (error) {
+      this.logger.error('Błąd przetwarzania powiadomienia', error);
+      // Nie rzucamy 500, bo P24 będzie ponawiał. Logujemy błąd.
+      throw error; 
+    }
+  }
+  
   @Post()
   async handleGooglePay(@Body() body: any) {
-    console.log('[GooglePay] Otrzymano token:', body);
+    console.log('[GooglePay] Otrzymano płatność:', body);
 
-    // Ponieważ frontend w finalizePayment nie wysyła orderId (tylko deviceId i scentId),
-    // musimy znaleźć, które zamówienie jest "otwarte" dla tego urządzenia.
-    
-    // Pobieramy wszystkie zamówienia (to rozwiązanie tymczasowe, w produkcji przekażemy orderId)
+    // 1. Znajdź zamówienie
+    // (W idealnym świecie frontend powinien wysyłać orderId, 
+    // ale tutaj szukamy ostatniego zamówienia dla tego urządzenia)
     const allOrders = await this.ordersService.findAll();
-    
-    // Szukamy ostatniego zamówienia PENDING dla tego urządzenia
     const pendingOrder = allOrders.find(o => 
       o.deviceId === body.deviceId && 
       o.status === 'PENDING'
     );
 
     if (!pendingOrder) {
-      console.error('Nie znaleziono oczekującego zamówienia dla urządzenia:', body.deviceId);
-      throw new NotFoundException('Brak oczekującego zamówienia do opłacenia');
+      console.error('❌ Nie znaleziono zamówienia dla urządzenia:', body.deviceId);
+      throw new NotFoundException('Brak oczekującego zamówienia');
     }
 
-    console.log(`[GooglePay] Zatwierdzam zamówienie: ${pendingOrder.id}`);
-    
-    // Potwierdzamy płatność
-    return this.ordersService.confirmPayment(pendingOrder.id, 'GOOGLE_PAY_DEMO_TOKEN', body.amount);
-  }
+    console.log(`✅ Zatwierdzam zamówienie: ${pendingOrder.id} kwota: ${body.amount}`);
 
+    // 2. Oznaczamy jako opłacone (używając naszej czystej metody)
+    return this.paymentsService.markAsPaid(pendingOrder.id, 'GPAY_DEMO_TOKEN');
+  }
   /**
    * 2. SYMULACJA PŁATNOŚCI (Ręczna)
    */

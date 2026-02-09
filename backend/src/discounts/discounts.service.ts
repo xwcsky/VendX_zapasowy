@@ -27,7 +27,6 @@ export class DiscountsService {
     });
   }
 
-  // Sprawdzanie kodu (używane przez Frontend)
   async validateCode(code: string) {
     const discount = await this.prisma.discountCode.findUnique({
       where: { code: code },

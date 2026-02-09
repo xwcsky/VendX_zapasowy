@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { from, Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ConfigurationService } from '../../common/services/configuration.service';
+import { environment } from '../../../environments/environment';
 
 declare const google: any;
 
@@ -10,6 +11,7 @@ declare const google: any;
 export class GooglePayService {
   private paymentsClient!: any;
   private environment: 'TEST' | 'PRODUCTION' = 'TEST';
+  private readonly gatewayMerchantId = environment.p24MerchantId || '370550';
 
   private readonly API_URL = ConfigurationService.getApiUrl();
 
@@ -21,12 +23,16 @@ export class GooglePayService {
   init(): Observable<boolean> {
     try {
       if (!this.paymentsClient) {
+        // Sprawdzamy czy skrypt w ogóle jest
+        if (typeof google === 'undefined' || !google.payments) {
+            console.error('Google Pay SDK nie załadowane!');
+            return of(false);
+        }
+
         this.paymentsClient = new google.payments.api.PaymentsClient({
           environment: this.environment
         });
         console.log('GooglePayService: PaymentsClient created', this.paymentsClient);
-      } else {
-        console.log('GooglePayService: PaymentsClient already exists');
       }
       return of(true);
     } catch (err) {
@@ -77,7 +83,7 @@ export class GooglePayService {
    * Create full PaymentDataRequest used by the <google-pay-button> (DIRECT tokenization)
    * You can call this from component or leave the component's own paymentRequest.
    */
-  createPaymentRequest(publicKeyPem: string, totalPrice = '1.00', currency = 'PLN') {
+  createPaymentRequest(totalPrice = '1.00', currency = 'PLN') {
     return {
       apiVersion: 2,
       apiVersionMinor: 0,
@@ -92,8 +98,8 @@ export class GooglePayService {
           tokenizationSpecification: {
             type: 'PAYMENT_GATEWAY', //Tylko dla testu
             parameters: {
-              'gateway': 'example',
-              'gatewayMerchantId': 'exampleGatewayMerchantId'
+              'gateway': 'przelewy24',
+              'gatewayMerchantId': this.gatewayMerchantId
               // protocolVersion: 'ECv2',
               // publicKey: publicKeyPem // must be PEM string with BEGIN/END
             }
@@ -102,7 +108,7 @@ export class GooglePayService {
       ],
       merchantInfo: {
         merchantName: 'Funcluster Daniel Jurkowski',
-        merchantId: '12345678901234567890' // Testowe ID akceptowane przez Sandbox
+        merchantId: this.gatewayMerchantId // Testowe ID akceptowane przez Sandbox
       },
       transactionInfo: {
         totalPriceStatus: 'FINAL',

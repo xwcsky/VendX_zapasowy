@@ -27,10 +27,7 @@ import {
       console.log(`Rozłączono: ${client.id}`);
     }
   
-    /**
-     * Raspberry Pi wysyła to zdarzenie zaraz po połączeniu,
-     * żeby zameldować się w swoim "pokoju" (np. device_1).
-     */
+    
     @SubscribeMessage('joinDeviceRoom')
     handleJoinDeviceRoom(
       @MessageBody() data: { deviceId: string },

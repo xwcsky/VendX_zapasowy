@@ -1,0 +1,20 @@
+# Environment variables declared in this file are automatically made available to Prisma.
+# See the documentation for more detail: https://pris.ly/d/prisma-schema#accessing-environment-variables-from-the-schema
+
+# Prisma supports the native connection string format for PostgreSQL, MySQL, SQLite, SQL Server, MongoDB and CockroachDB.
+# See the documentation for all the connection string options: https://pris.ly/d/connection-strings
+
+# The following `prisma+postgres` URL is similar to the URL produced by running a local Prisma Postgres 
+# server with the `prisma dev` CLI command, when not choosing any non-default ports or settings. The API key, unlike the 
+# one found in a remote Prisma Postgres URL, does not contain any sensitive information.
+
+DATABASE_URL="postgresql://postgres:cKJFLthYWMWMLXbvcyBZJCAdjygVwFkm@trolley.proxy.rlwy.net:20570/railway?schema=public&sslmode=require"
+JWT_SECRET="f0e59e5873e9b4cb7413413d6ebabc2d8f6295f09878740849ae5b3707845672"
+PORT=8080
+NODE_ENV=production
+
+P24_API=https://sandbox.przelewy24.pl/api/v1
+P24_MERCHANT_ID=370550
+P24_POS_ID=370550
+P24_CRC=534570a61575677f
+P24_REPORT_KEY=f253bea4e233fe43aaeaf93db96109c3

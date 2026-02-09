@@ -19,7 +19,7 @@ export class DiscountsController {
   remove(@Param('id') id: string) {
     return this.discountsService.remove(id);
   }
-
+  
   @Post('check')
   check(@Body() body: { code: string }) {
     return this.discountsService.validateCode(body.code);
